@@ -1,16 +1,17 @@
 import React from 'react';
 
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 type Produto = {
   id: string;
   nome: string;
   preco: string;
+  endereco: string;
 };
 
 type ProdutoItemProps = {
@@ -24,7 +25,9 @@ export default function ProdutoItem({
 }: ProdutoItemProps) {
   return (
     <View style={styles.container}>
+
       <View style={styles.informacoes}>
+
         <Text style={styles.nome}>
           {item.nome}
         </Text>
@@ -32,6 +35,11 @@ export default function ProdutoItem({
         <Text style={styles.preco}>
           R$ {item.preco}
         </Text>
+
+        <Text style={styles.endereco}>
+          📍 {item.endereco}
+        </Text>
+
       </View>
 
       <TouchableOpacity
@@ -42,6 +50,7 @@ export default function ProdutoItem({
           Remover
         </Text>
       </TouchableOpacity>
+
     </View>
   );
 }
@@ -61,6 +70,7 @@ const styles = StyleSheet.create({
 
   informacoes: {
     flex: 1,
+    marginRight: 10,
   },
 
   nome: {
@@ -73,6 +83,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#198754',
     marginTop: 4,
+  },
+
+  endereco: {
+    fontSize: 13,
+    color: '#555555',
+    marginTop: 6,
   },
 
   botaoRemover: {
