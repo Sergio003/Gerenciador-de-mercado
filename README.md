@@ -20,7 +20,7 @@ O Menor Preço Saqua busca facilitar a consulta e o compartilhamento de preços 
 
 ## Objetivo
 
-Desenvolver um aplicativo híbrido que auxilie consumidores a localizar e compartilhar os menores preços encontrados nos mercados de Saquarema.
+Desenvolver um aplicativo híbrido que auxilie os consumidores a localizar e compartilhar os menores preços encontrados nos mercados de Saquarema.
 
 ---
 
@@ -38,7 +38,7 @@ Nas primeiras etapas foi definida a ideia do aplicativo Menor Preço Saqua, part
 
 Foi desenvolvido o primeiro MVP com uma tela para cadastro de produtos e preços.
 
-### Funcionalidades desenvolvidas
+### Funcionalidades
 
 - Campo para informar o nome do produto;
 - Campo para informar o preço encontrado;
