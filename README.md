@@ -135,40 +135,14 @@ A API é utilizada para consultar informações de endereço a partir do CEP inf
 - Exibição do endereço retornado pela API;
 - Validação do CEP informado;
 - Indicador de carregamento durante a consulta;
-- Tratamento de erros;
-- Associação do endereço encontrado ao produto cadastrado.
-
-### Fluxo da integração
-
-```text
-Usuário informa o CEP
-        ↓
-Aplicativo realiza uma requisição GET
-        ↓
-ViaCEP recebe a solicitação
-        ↓
-API retorna os dados em JSON
-        ↓
-Aplicativo processa os dados
-        ↓
-Endereço é exibido na interface
-        ↓
-Produto é cadastrado com preço e localização
-```
-
-### Serviço da API
-
-A integração com a ViaCEP foi separada em um serviço:
-
-```text
-src/services/viacep.ts
-```
-
-Essa organização ajuda a separar a comunicação com a API da interface da aplicação.
+- Tratamento de erros durante a consulta;
+- Mensagens de sucesso e erro para o usuário;
+- Associação do endereço do mercado ao produto cadastrado;
+- Exibição da localização junto ao produto na lista.
 
 ### Prints da aplicação — Aula 5
 
-#### Consulta do CEP do mercado
+#### Consulta de CEP
 
 ![Consulta de CEP](consulta-cep.png)
 
@@ -182,26 +156,100 @@ Essa organização ajuda a separar a comunicação com a API da interface da apl
 
 ---
 
+## Aula 6 — Persistência de Dados, Edição e Tratamento de Erros
+
+Na Aula 6, o projeto Menor Preço Saqua foi aprimorado com persistência local dos produtos cadastrados na versão Web da aplicação.
+
+Os dados passaram a ser armazenados utilizando `localStorage`, permitindo que os produtos permaneçam cadastrados mesmo após a atualização da página.
+
+Também foi implementada a edição dos produtos cadastrados, mantendo a funcionalidade de remoção e adicionando novos tratamentos e mensagens de retorno ao usuário.
+
+### Funcionalidades implementadas
+
+- Persistência dos produtos utilizando `localStorage`;
+- Conversão dos dados utilizando `JSON.stringify`;
+- Recuperação dos dados utilizando `JSON.parse`;
+- Recuperação automática dos produtos ao iniciar a aplicação;
+- Manutenção dos produtos após atualizar a página;
+- Edição do nome e do preço dos produtos cadastrados;
+- Remoção dos produtos cadastrados;
+- Atualização dos dados persistidos após edição ou remoção;
+- Validação dos campos obrigatórios;
+- Tratamento de erros utilizando `try`, `catch` e `finally`;
+- Mensagens de sucesso e erro para o usuário;
+- Indicador de carregamento durante a consulta de CEP;
+- Tratamento de falhas durante a consulta a API ViaCEP.
+
+### Testes realizados
+
+Durante os testes da Aula 6 foram verificados:
+
+- Cadastro de produto com localização;
+- Persistência do produto após atualizar a página;
+- Edição do produto cadastrado;
+- Persistência das alterações após atualizar a página;
+- Remoção do produto;
+- Persistência da remoção após atualizar a página;
+- Validação dos campos obrigatórios;
+- Consulta de endereço utilizando a API ViaCEP;
+- Exibição das mensagens de sucesso e erro.
+
+A persistência com `localStorage` é utilizada na versão Web do aplicativo. Na próxima etapa, para a entrega da P1, será implementada a persistência utilizando banco de dados em nuvem.
+
+---
+### Prints da aplicação — Aula 6
+
+#### Persistência dos dados após recarregar a página
+
+![Persistência dos produtos](persistencia-aula6.png)
+
+#### Produto cadastrado com opções de edição e remoção
+
+![Produto cadastrado com botões](produto-cadastrado-botoes.png)
+
+#### Edição de produto
+
+![Tela de edição](tela-editar.png)
+
+#### Produto atualizado
+
+![Produto atualizado](produto-atualizado.png)
+
+#### Validação dos campos obrigatórios
+
+![Validação de campos](erro-campo-vazio.png)
+
+#### Remoção de produto
+
+![Produto removido](produto-removido.png)
+
+---
+
 # Funcionalidades atuais
 
-Até a Aula 5, o **Menor Preço Saqua** possui:
+Até a Aula 6, o Menor Preço Saqua possui:
 
 - Cadastro do nome do produto;
 - Cadastro do preço encontrado;
 - Cadastro de vários produtos;
 - Exibição dos produtos em lista;
 - Contador de produtos cadastrados;
+- Edição de produtos cadastrados;
 - Remoção individual de produtos;
-- Validação dos campos;
+- Validação dos campos obrigatórios;
 - Consulta de CEP;
 - Busca automática do endereço do mercado;
 - Integração com API REST;
 - Processamento de dados JSON;
 - Indicador de carregamento;
 - Tratamento de erros;
-- Exibição da localização associada ao produto.
+- Mensagens de sucesso e erro;
+- Exibição da localização associada ao produto;
+- Persistência dos produtos utilizando `localStorage` na versão Web;
+- Recuperação automática dos produtos após atualizar a página;
+- Atualização dos dados persistidos após edição ou remoção.
 
-> Atualmente, os produtos cadastrados são mantidos temporariamente em memória durante a execução do aplicativo.
+Na versão Web, os produtos cadastrados são armazenados no `localStorage`, permitindo que os dados permaneçam disponíveis mesmo após a atualização da página.
 
 ---
 
@@ -263,14 +311,16 @@ O aplicativo está sendo evoluído de acordo com as atividades propostas durante
 
 # Histórico de desenvolvimento
 
-| Etapa | Desenvolvimento |
-|---|---|
-| Aulas 2 e 3 | Definição do problema, proposta e desenvolvimento do primeiro MVP |
-| Aula 4 | `useState`, `TextInput`, validações, `FlatList`, remoção e componente reutilizável |
-| Aula 5 | Integração com API REST ViaCEP, requisição `GET`, JSON, loading e tratamento de erros |
+Etapa e Desenvolvimento
+
+Aulas 2 e 3 - Definição do problema, proposta e desenvolvimento do primeiro MVP
+Aula 4 - `useState`, `TextInput`, validações, `FlatList`, remoção e componente reutilizável
+Aula 5 - Integração com API REST ViaCEP, requisição `GET`, JSON, loading e tratamento de erros
+Aula 6 - Persistência com `localStorage`, recuperação automática dos dados, edição, remoção e tratamento de erros
 
 ---
 
 # Próximas etapas
 
-O projeto continuará sendo aprimorado nas próximas aulas, adicionando novas funcionalidades de acordo com a evolução da disciplina.
+A próxima etapa do projeto será a preparação para a entrega da P1, incluindo a hospedagem da aplicação, disponibilização por meio de uma URL pública e implementação da persistência de dados utilizando banco de dados em nuvem.
+
