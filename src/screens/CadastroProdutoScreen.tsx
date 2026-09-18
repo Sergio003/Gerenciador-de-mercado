@@ -18,6 +18,13 @@ import {
   Endereco,
 } from '../services/viacep';
 
+import {
+  atualizarProduto,
+  cadastrarProduto,
+  excluirProduto,
+  listarProdutos,
+} from '../services/produtosApi';
+
 type Produto = {
   id: string;
   nome: string;
@@ -46,13 +53,18 @@ export default function CadastroProdutoScreen() {
   const [produtoEditando, setProdutoEditando] =
     useState<string | null>(null);
 
-  // AULA 6 - Recuperação automática dos dados
+  // AULA 6 + P1
+  // Recupera primeiro o localStorage e depois sincroniza com a API.
   useEffect(() => {
     carregarProdutos();
   }, []);
 
-  function carregarProdutos() {
+  async function carregarProdutos() {
     try {
+      setCarregando(true);
+      setErro('');
+
+      // AULA 6 - recuperação do localStorage
       if (
         Platform.OS === 'web' &&
         typeof window !== 'undefined'
@@ -61,22 +73,38 @@ export default function CadastroProdutoScreen() {
           localStorage.getItem(CHAVE_STORAGE);
 
         if (dadosSalvos) {
-          const lista = JSON.parse(dadosSalvos);
+          const listaLocal = JSON.parse(dadosSalvos);
 
-          if (Array.isArray(lista)) {
-            setProdutos(lista);
+          if (Array.isArray(listaLocal)) {
+            setProdutos(listaLocal);
           }
         }
       }
+
+      // P1 - busca os dados persistidos no MongoDB
+      const dadosApi = await listarProdutos();
+
+      const listaApi: Produto[] = dadosApi.map(
+        (item) => ({
+          id: item._id,
+          nome: item.nome,
+          preco: item.preco,
+          endereco: item.endereco,
+        })
+      );
+
+      salvarLocalmente(listaApi);
     } catch (error) {
       setErro(
-        'Não foi possível recuperar os produtos salvos.'
+        'Não foi possível carregar os produtos do servidor. Os dados locais serão mantidos.'
       );
+    } finally {
+      setCarregando(false);
     }
   }
 
-  // AULA 6 - Persistência no localStorage
-  function salvarProdutos(lista: Produto[]) {
+  // AULA 6 - localStorage continua sendo utilizado
+  function salvarLocalmente(lista: Produto[]) {
     try {
       if (
         Platform.OS === 'web' &&
@@ -89,10 +117,9 @@ export default function CadastroProdutoScreen() {
       }
 
       setProdutos(lista);
-
     } catch (error) {
       setErro(
-        'Não foi possível salvar os dados.'
+        'Não foi possível salvar os dados localmente.'
       );
     }
   }
@@ -118,8 +145,10 @@ export default function CadastroProdutoScreen() {
       const dados = await buscarCep(cepLimpo);
 
       setEndereco(dados);
-      setSucesso('Endereço encontrado com sucesso!');
 
+      setSucesso(
+        'Endereço encontrado com sucesso!'
+      );
     } catch (error) {
       setErro(
         'Não foi possível localizar esse CEP.'
@@ -127,13 +156,12 @@ export default function CadastroProdutoScreen() {
 
       setSucesso('');
       setEndereco(null);
-
     } finally {
       setCarregando(false);
     }
   }
 
-  function adicionarProduto() {
+  async function adicionarProduto() {
     const produtoTratado = produto.trim();
     const precoTratado = preco.trim();
 
@@ -161,50 +189,79 @@ export default function CadastroProdutoScreen() {
       `${endereco.bairro || 'Bairro não informado'}, ` +
       `${endereco.localidade}/${endereco.uf}`;
 
-    const novoProduto: Produto = {
-      id: Date.now().toString(),
-      nome: produtoTratado,
-      preco: precoTratado,
-      endereco: enderecoCompleto,
-    };
+    try {
+      setCarregando(true);
+      setErro('');
+      setSucesso('');
 
-    const novaLista = [
-      ...produtos,
-      novoProduto,
-    ];
+      // P1 - salva no MongoDB através da API
+      const produtoCriado =
+        await cadastrarProduto(
+          produtoTratado,
+          precoTratado,
+          enderecoCompleto
+        );
 
-    salvarProdutos(novaLista);
+      const novoProduto: Produto = {
+        id: produtoCriado._id,
+        nome: produtoCriado.nome,
+        preco: produtoCriado.preco,
+        endereco: produtoCriado.endereco,
+      };
 
-    limparFormulario();
+      const novaLista = [
+        ...produtos,
+        novoProduto,
+      ];
 
-    setErro('');
-    setSucesso(
-      'Produto cadastrado com sucesso!'
-    );
+      // AULA 6 - mantém localStorage sincronizado
+      salvarLocalmente(novaLista);
+
+      limparFormulario();
+
+      setSucesso(
+        'Produto cadastrado com sucesso!'
+      );
+    } catch (error) {
+      setErro(
+        'Não foi possível cadastrar o produto no servidor.'
+      );
+      setSucesso('');
+    } finally {
+      setCarregando(false);
+    }
   }
 
-  function removerProduto(id: string) {
+  async function removerProduto(id: string) {
     try {
+      setCarregando(true);
+      setErro('');
+      setSucesso('');
+
+      // P1 - remove do MongoDB
+      await excluirProduto(id);
+
       const novaLista = produtos.filter(
         (item) => item.id !== id
       );
 
-      salvarProdutos(novaLista);
+      // AULA 6 - atualiza localStorage
+      salvarLocalmente(novaLista);
 
       if (produtoEditando === id) {
         cancelarEdicao();
       }
 
-      setErro('');
       setSucesso(
         'Produto removido com sucesso!'
       );
-
     } catch (error) {
       setErro(
         'Não foi possível remover o produto.'
       );
       setSucesso('');
+    } finally {
+      setCarregando(false);
     }
   }
 
@@ -218,12 +275,13 @@ export default function CadastroProdutoScreen() {
     setCep('');
 
     setErro('');
+
     setSucesso(
       'Edite o nome ou o preço e clique em SALVAR ALTERAÇÕES.'
     );
   }
 
-  function salvarEdicao() {
+  async function salvarEdicao() {
     const produtoTratado = produto.trim();
     const precoTratado = preco.trim();
 
@@ -238,14 +296,43 @@ export default function CadastroProdutoScreen() {
       return;
     }
 
+    if (!produtoEditando) {
+      return;
+    }
+
+    const produtoAtual =
+      produtos.find(
+        (item) => item.id === produtoEditando
+      );
+
+    if (!produtoAtual) {
+      setErro('Produto não encontrado.');
+      return;
+    }
+
     try {
+      setCarregando(true);
+      setErro('');
+      setSucesso('');
+
+      // P1 - atualiza no MongoDB
+      const produtoAtualizado =
+        await atualizarProduto(
+          produtoEditando,
+          produtoTratado,
+          precoTratado,
+          produtoAtual.endereco
+        );
+
       const novaLista = produtos.map(
         (item) => {
           if (item.id === produtoEditando) {
             return {
-              ...item,
-              nome: produtoTratado,
-              preco: precoTratado,
+              id: produtoAtualizado._id,
+              nome: produtoAtualizado.nome,
+              preco: produtoAtualizado.preco,
+              endereco:
+                produtoAtualizado.endereco,
             };
           }
 
@@ -253,22 +340,23 @@ export default function CadastroProdutoScreen() {
         }
       );
 
-      salvarProdutos(novaLista);
+      // AULA 6 - atualiza localStorage
+      salvarLocalmente(novaLista);
 
       limparFormulario();
 
       setProdutoEditando(null);
 
-      setErro('');
       setSucesso(
         'Produto atualizado com sucesso!'
       );
-
     } catch (error) {
       setErro(
         'Não foi possível atualizar o produto.'
       );
       setSucesso('');
+    } finally {
+      setCarregando(false);
     }
   }
 
@@ -372,7 +460,7 @@ export default function CadastroProdutoScreen() {
           <ActivityIndicator size="small" />
 
           <Text style={styles.textoLoading}>
-            Buscando endereço...
+            Processando...
           </Text>
         </View>
       )}
@@ -420,6 +508,7 @@ export default function CadastroProdutoScreen() {
           <TouchableOpacity
             style={styles.botao}
             onPress={salvarEdicao}
+            disabled={carregando}
           >
             <Text style={styles.textoBotao}>
               SALVAR ALTERAÇÕES
@@ -429,6 +518,7 @@ export default function CadastroProdutoScreen() {
           <TouchableOpacity
             style={styles.botaoCancelar}
             onPress={cancelarEdicao}
+            disabled={carregando}
           >
             <Text style={styles.textoBotao}>
               CANCELAR EDIÇÃO
@@ -439,6 +529,7 @@ export default function CadastroProdutoScreen() {
         <TouchableOpacity
           style={styles.botao}
           onPress={adicionarProduto}
+          disabled={carregando}
         >
           <Text style={styles.textoBotao}>
             ADICIONAR PRODUTO

@@ -1,0 +1,15 @@
+{
+  "name": "menorpreco-saqua-backend",
+  "version": "1.0.0",
+  "description": "API do projeto Menor Preço Saqua",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.0",
+    "express": "^5.2.1",
+    "mongoose": "^9.10.1"
+  }
+}
