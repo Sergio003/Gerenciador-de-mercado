@@ -16,11 +16,13 @@ type Produto = {
 
 type ProdutoItemProps = {
   item: Produto;
+  onEditar: (item: Produto) => void;
   onRemover: (id: string) => void;
 };
 
 export default function ProdutoItem({
   item,
+  onEditar,
   onRemover,
 }: ProdutoItemProps) {
   return (
@@ -42,14 +44,27 @@ export default function ProdutoItem({
 
       </View>
 
-      <TouchableOpacity
-        style={styles.botaoRemover}
-        onPress={() => onRemover(item.id)}
-      >
-        <Text style={styles.textoBotao}>
-          Remover
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.botoes}>
+
+        <TouchableOpacity
+          style={styles.botaoEditar}
+          onPress={() => onEditar(item)}
+        >
+          <Text style={styles.textoBotao}>
+            Editar
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.botaoRemover}
+          onPress={() => onRemover(item.id)}
+        >
+          <Text style={styles.textoBotao}>
+            Remover
+          </Text>
+        </TouchableOpacity>
+
+      </View>
 
     </View>
   );
@@ -89,6 +104,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#555555',
     marginTop: 6,
+  },
+
+  botoes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  botaoEditar: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
 
   botaoRemover: {
