@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3000';
+const API_URL =
+  'https://menor-preco-saqua-api-8b8q.onrender.com';
 
 export type ProdutoApi = {
   _id: string;
