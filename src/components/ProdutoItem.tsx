@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 import {
@@ -6,6 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
+import type { Tema } from '../services/acessibilidade';
 
 type Produto = {
   id: string;
@@ -18,39 +21,89 @@ type ProdutoItemProps = {
   item: Produto;
   onEditar: (item: Produto) => void;
   onRemover: (id: string) => void;
+  tema?: Tema;
+  tamanhoFonte?: number;
 };
 
 export default function ProdutoItem({
   item,
   onEditar,
   onRemover,
+  tema = 'claro',
+  tamanhoFonte = 16,
 }: ProdutoItemProps) {
+  const escuro = tema === 'escuro';
+
+  const cores = {
+    fundo: escuro ? '#252525' : '#FFFFFF',
+    borda: escuro ? '#62D99B' : '#198754',
+    texto: escuro ? '#FFFFFF' : '#333333',
+    preco: escuro ? '#86EFAC' : '#198754',
+    endereco: escuro ? '#D1D5DB' : '#555555',
+  };
+
   return (
-    <View style={styles.container}>
-
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: cores.fundo,
+          borderColor: cores.borda,
+        },
+      ]}
+    >
       <View style={styles.informacoes}>
-
-        <Text style={styles.nome}>
+        <Text
+          style={[
+            styles.nome,
+            {
+              color: cores.texto,
+              fontSize: tamanhoFonte,
+            },
+          ]}
+        >
           {item.nome}
         </Text>
 
-        <Text style={styles.preco}>
+        <Text
+          style={[
+            styles.preco,
+            {
+              color: cores.preco,
+              fontSize: tamanhoFonte,
+            },
+          ]}
+        >
           R$ {item.preco}
         </Text>
 
-        <Text style={styles.endereco}>
+        <Text
+          style={[
+            styles.endereco,
+            {
+              color: cores.endereco,
+              fontSize: tamanhoFonte,
+            },
+          ]}
+        >
           📍 {item.endereco}
         </Text>
-
       </View>
 
       <View style={styles.botoes}>
-
         <TouchableOpacity
           style={styles.botaoEditar}
           onPress={() => onEditar(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`Editar produto ${item.nome}`}
+          accessibilityHint="Abre o formulário para alterar o produto"
         >
-          <Text style={styles.textoBotao}>
+          <Text
+            style={[
+              styles.textoBotao,
+              { fontSize: tamanhoFonte },
+            ]}
+          >
             Editar
           </Text>
         </TouchableOpacity>
@@ -58,14 +111,20 @@ export default function ProdutoItem({
         <TouchableOpacity
           style={styles.botaoRemover}
           onPress={() => onRemover(item.id)}
+          accessibilityRole="button"
+          accessibilityLabel={`Remover produto ${item.nome}`}
+          accessibilityHint="Exclui o produto cadastrado"
         >
-          <Text style={styles.textoBotao}>
+          <Text
+            style={[
+              styles.textoBotao,
+              { fontSize: tamanhoFonte },
+            ]}
+          >
             Remover
           </Text>
         </TouchableOpacity>
-
       </View>
-
     </View>
   );
 }
@@ -77,14 +136,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#198754',
+    gap: 10,
   },
 
   informacoes: {
     flex: 1,
+    minWidth: 150,
     marginRight: 10,
   },
 
@@ -108,6 +170,7 @@ const styles = StyleSheet.create({
 
   botoes: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 8,
   },
@@ -129,5 +192,6 @@ const styles = StyleSheet.create({
   textoBotao: {
     color: '#FFFFFF',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
