@@ -41,13 +41,21 @@ Foi desenvolvido o primeiro MVP com uma tela para cadastro de produtos e preços
 ### Funcionalidades
 
 - Campo para informar o nome do produto;
+
 - Campo para informar o preço encontrado;
+
 - Cadastro de produto e preço;
+
 - Cadastro de vários produtos;
+
 - Exibição dos produtos cadastrados;
+
 - Limpeza dos campos após o cadastro;
+
 - Limpeza da lista de produtos;
+
 - Validação dos campos obrigatórios;
+
 - Mensagem de erro quando o usuário tenta cadastrar sem preencher os dados necessários.
 
 ### Prints da aplicação — Aulas 2 e 3
@@ -75,24 +83,39 @@ O cadastro de produtos passou a utilizar gerenciamento de estado e uma lista din
 ### Funcionalidades e conceitos aplicados
 
 - Utilização do `useState`;
+
 - Utilização de `TextInput`;
+
 - Botões funcionais;
+
 - Validação de campos vazios;
+
 - Cadastro temporário dos produtos em memória;
+
 - Utilização de `FlatList`;
+
 - Exibição dinâmica dos produtos cadastrados;
+
 - Remoção individual de produtos;
+
 - Criação de componente reutilizável;
+
 - Organização do projeto em componentes, telas e serviços.
 
 ### Organização utilizada
 
 ```
+
 src/
+
 ├── components/
-│   └── ProdutoItem.tsx
+
+│   └── ProdutoItem.tsx
+
 ├── screens/
-│   └── CadastroProdutoScreen.tsx
+
+│   └── CadastroProdutoScreen.tsx
+
 └── services/
 
 ```
@@ -128,17 +151,29 @@ A API é utilizada para consultar informações de endereço a partir do CEP inf
 ### Funcionalidades implementadas
 
 - Campo para informar o CEP do mercado;
+
 - Consulta de CEP;
+
 - Requisição HTTP utilizando o método `GET`;
+
 - Consumo de API REST pública;
+
 - Utilização de `fetch`;
+
 - Processamento da resposta em formato JSON;
+
 - Exibição do endereço retornado pela API;
+
 - Validação do CEP informado;
+
 - Indicador de carregamento durante a consulta;
+
 - Tratamento de erros durante a consulta;
+
 - Mensagens de sucesso e erro para o usuário;
+
 - Associação do endereço do mercado ao produto cadastrado;
+
 - Exibição da localização junto ao produto na lista.
 
 ### Prints da aplicação — Aula 5
@@ -159,7 +194,7 @@ A API é utilizada para consultar informações de endereço a partir do CEP inf
 
 ## Aula 6 — Persistência de Dados, Edição e Tratamento de Erros
 
-Na Aula 6, o projeto **Menor Preço Saqua**  foi aprimorado com persistência local dos produtos cadastrados na versão Web da aplicação.
+Na Aula 6, o projeto **Menor Preço Saqua**  foi aprimorado com persistência local dos produtos cadastrados na versão Web da aplicação.
 
 Os dados passaram a ser armazenados utilizando `localStorage`, permitindo que os produtos permaneçam cadastrados mesmo após a atualização da página.
 
@@ -168,17 +203,29 @@ Também foi implementada a edição dos produtos cadastrados, mantendo a funcion
 ### Funcionalidades implementadas
 
 - Persistência dos produtos utilizando `localStorage`;
+
 - Conversão dos dados utilizando `JSON.stringify`;
+
 - Recuperação dos dados utilizando `JSON.parse`;
+
 - Recuperação automática dos produtos ao iniciar a aplicação;
+
 - Manutenção dos produtos após atualizar a página;
+
 - Edição do nome e do preço dos produtos cadastrados;
+
 - Remoção dos produtos cadastrados;
+
 - Atualização dos dados persistidos após edição ou remoção;
+
 - Validação dos campos obrigatórios;
+
 - Tratamento de erros utilizando `try`, `catch` e `finally`;
+
 - Mensagens de sucesso e erro para o usuário;
+
 - Indicador de carregamento durante a consulta de CEP;
+
 - Tratamento de falhas durante a consulta a API ViaCEP.
 
 ### Testes realizados
@@ -186,13 +233,21 @@ Também foi implementada a edição dos produtos cadastrados, mantendo a funcion
 Durante os testes da Aula 6 foram verificados:
 
 - Cadastro de produto com localização;
+
 - Persistência do produto após atualizar a página;
+
 - Edição do produto cadastrado;
+
 - Persistência das alterações após atualizar a página;
+
 - Remoção do produto;
+
 - Persistência da remoção após atualizar a página;
+
 - Validação dos campos obrigatórios;
+
 - Consulta de endereço utilizando a API ViaCEP;
+
 - Exibição das mensagens de sucesso e erro.
 
 A persistência com `localStorage` é utilizada na versão Web do aplicativo. Posteriormente, para a entrega da P1, o projeto foi integrado a um backend próprio e a um banco de dados em nuvem.
@@ -217,7 +272,7 @@ A persistência com `localStorage` é utilizada na versão Web do aplicativo. Po
 
 ![Produto atualizado](produto-atualizado.png)
 
-#### Validação dos campos obrigatórios   
+#### Validação dos campos obrigatórios   
 
 ![Validação de campos](erro-campo-vazio.png)
 
@@ -237,20 +292,26 @@ A aplicação também mantém a integração com a API **ViaCEP** para consulta 
 
 ## Arquitetura da P1
 
-```  text
+```text
+
 Usuário
-    
+
 Frontend — Expo / React Native Web
+
 Vercel
-   
+
 API REST — Node.js / Express
+
 Render
-   
+
 MongoDB Atlas
+
 Banco de dados em nuvem
 
 Frontend - ViaCEP
+
 Consulta de endereço
+
 ```
 
 ## Backend e API REST
@@ -264,17 +325,25 @@ O backend recebe as requisições do frontend e realiza as operações de cadast
 Operação - Método HTTP - Funcionalidade
 
 Create - `POST` - Cadastrar um produto
+
 Read - `GET` - Listar os produtos cadastrados
+
 Update - `PUT` - Editar um produto
-  Delete - `DELETE` - Excluir um produto
+
+  Delete - `DELETE` - Excluir um produto
 
 ### Endpoints
 
 ```text
-GET    /produtos
-POST   /produtos
-PUT    /produtos/:id
+
+GET    /produtos
+
+POST   /produtos
+
+PUT    /produtos/:id
+
 DELETE /produtos/:id
+
 ```
 
 ## Banco de dados em nuvem
@@ -288,25 +357,37 @@ A conexão utiliza a variável de ambiente `MONGODB_URI`. O arquivo `.env` não 
 ## Aplicação publicada
 
 ### Frontend — Vercel
+
 https://gerenciador-de-mercado.vercel.app
 
 ### Backend — Render
+
 https://menor-preco-saqua-api-8b8q.onrender.com
 
 ### Endpoint público de produtos
+
 https://menor-preco-saqua-api-8b8q.onrender.com/produtos
 
 ## Testes realizados — P1
 
 - Acesso pela URL pública;
+
 - Comunicação entre frontend e backend;
+
 - Comunicação entre backend e MongoDB Atlas;
+
 - Consulta de endereço utilizando ViaCEP;
+
 - Cadastro e recuperação de produtos;
+
 - Persistência após atualizar a página;
+
 - Edição e persistência da edição;
+
 - Exclusão e persistência da exclusão;
+
 - Sincronização das alterações com o MongoDB Atlas;
+
 - Tratamento de erros e mensagens de retorno ao usuário.
 
 Os testes de cadastro, consulta, edição e exclusão foram realizados com sucesso na aplicação publicada e as alterações foram confirmadas no MongoDB Atlas.
@@ -332,30 +413,55 @@ Os testes de cadastro, consulta, edição e exclusão foram realizados com suces
 Atualmente, o Menor Preço Saqua possui:
 
 - Cadastro do nome do produto;
+
 - Cadastro do preço encontrado;
+
 - Cadastro de vários produtos;
+
 - Exibição dos produtos em lista;
+
 - Contador de produtos cadastrados;
+
 - Edição de produtos cadastrados;
+
 - Remoção individual de produtos;
+
 - Validação dos campos obrigatórios;
+
 - Consulta de CEP;
+
 - Busca automática do endereço do mercado;
+
 - Integração com API REST;
+
 - Processamento de dados JSON;
+
 - Indicador de carregamento;
+
 - Tratamento de erros;
+
 - Mensagens de sucesso e erro;
+
 - Exibição da localização associada ao produto;
+
 - Persistência dos produtos utilizando `localStorage` na versão Web;
+
 - Recuperação automática dos produtos após atualizar a página;
+
 - Atualização dos dados persistidos após edição ou remoção;
+
 - Backend próprio desenvolvido com Node.js e Express;
+
 - API REST para gerenciamento dos produtos;
+
 - Operações CRUD de cadastro, consulta, edição e exclusão;
+
 - Persistência dos produtos no MongoDB Atlas;
+
 - Backend hospedado no Render;
+
 - Frontend publicado no Vercel;
+
 - Aplicação disponível por URL pública.
 
 Na Aula 6, o `localStorage` foi utilizado para demonstrar a persistência local na versão Web. Na P1, a aplicação passou a utilizar o MongoDB Atlas para persistência dos produtos em nuvem.
@@ -365,21 +471,37 @@ Na Aula 6, o `localStorage` foi utilizado para demonstrar a persistência local 
 # Tecnologias utilizadas
 
 - React Native;
+
 - TypeScript;
+
 - Expo;
+
 - Expo Router;
+
 - `fetch`;
+
 - API REST;
+
 - ViaCEP;
+
 - Node.js;
+
 - Express;
+
 - Mongoose;
+
 - MongoDB Atlas;
+
 - CORS;
+
 - Dotenv;
+
 - Render;
+
 - Vercel;
+
 - Git;
+
 - GitHub.
 
 ---
@@ -389,8 +511,11 @@ Na Aula 6, o `localStorage` foi utilizado para demonstrar a persistência local 
 ```text
 Gerenciador-de-mercado-final/
 ├── app/
+│   ├── _layout.tsx
 │   └── (tabs)/
-│       └── index.tsx
+│       ├── _layout.tsx
+│       ├── index.tsx
+│       └── acessibilidade.tsx
 ├── backend/
 │   ├── models/
 │   │   └── Produto.js
@@ -404,7 +529,8 @@ Gerenciador-de-mercado-final/
 │   │   └── CadastroProdutoScreen.tsx
 │   └── services/
 │       ├── produtosApi.ts
-│       └── viacep.ts
+│       ├── viacep.ts
+│       └── acessibilidade.ts
 ├── assets/
 ├── .gitignore
 ├── package.json
@@ -418,19 +544,111 @@ Gerenciador-de-mercado-final/
 # Integrantes
 
 - Heloísa Alice
+
 - Rafael Farias
+
 - Paulo Sérgio
+
 - Leonardo Velloso
+
+---
+
+# P2 — Aula 1: Acessibilidade
+
+A primeira atividade da P2 acrescentou recursos de acessibilidade à versão web do **Menor Preço Saqua**, preservando as operações de cadastro, consulta, edição e exclusão de produtos.
+
+
+## Evidências da P2 — Aula 1: Acessibilidade
+
+As imagens abaixo demonstram os recursos de acessibilidade
+implementados no Menor Preço Saqua.
+
+### 1. Tela de produtos — Modo claro
+
+![Tela de produtos no modo claro](p2-modo-claro.png)
+
+### 2. Tela de produtos — Modo escuro
+
+![Tela de produtos no modo escuro](p2-modo-escuro.png)
+
+### 3. Aumento do tamanho da fonte
+
+![Aumento do tamanho da fonte](p2-aumentar-fonte.png)
+
+### 4. Redução do tamanho da fonte
+
+![Redução do tamanho da fonte](p2-diminuir-fonte.png)
+
+### 5. Persistência das preferências
+
+![Persistência das configurações](p2-persistencia.png)
+
+### 6. Integração com VLibras
+
+![VLibras funcionando](p2-vlibras.png)
+
+### 7. Evidência visual do recurso de Libras
+
+![Recurso de Libras em funcionamento](p2-leitor-tela.png)
+
+**Observação:** o leitor de tela do Windows foi testado
+e aprovado, mas sua execução não é demonstrada
+diretamente pela captura de tela.
+
+## Funcionalidades implementadas
+
+- **Tamanho de fonte ajustável:** controles na aba **Acessibilidade** permitem selecionar tamanhos de 14 a 26, aplicados à interface de produtos.
+- **Tema claro e escuro:** opção para alternar a aparência do aplicativo.
+- **Persistência das preferências:** o tema e o tamanho da fonte permanecem após atualizar a página, utilizando `localStorage` no navegador (chaves `menorpreco-tema` e `menorpreco-tamanho-fonte`).
+- **Rótulos de acessibilidade:** identificação dos principais campos e botões para tecnologias assistivas.
+- **VLibras:** integração do widget de tradução automática para Libras na versão web, disponível nas abas do aplicativo.
+- **Navegação por teclado:** os controles principais foram testados com `Tab` e `Enter`.
+
+### Arquivos envolvidos
+
+- `app/_layout.tsx` — integração web do VLibras.
+- `app/(tabs)/_layout.tsx` — navegação entre as abas.
+- `app/(tabs)/acessibilidade.tsx` — configurações de tema e fonte.
+- `src/services/acessibilidade.ts` — leitura das preferências salvas.
+- `src/screens/CadastroProdutoScreen.tsx` — aplicação das preferências na tela de produtos.
+- `src/components/ProdutoItem.tsx` — aparência acessível dos cartões de produtos.
+
+## Validação da P2 — Aula 1
+
+Foram realizados e aprovados **10 testes na versão web**, conforme execução e confirmação da equipe:
+
+| Nº | Teste | Resultado |
+|---|---|---|
+| 1 | Alternar o tema claro/escuro nas duas abas | Aprovado |
+| 2 | Aumentar a fonte até 26 sem cortes | Aprovado |
+| 3 | Diminuir a fonte até 14 e verificar a legibilidade | Aprovado |
+| 4 | Atualizar a página com F5 e manter as preferências | Aprovado |
+| 5 | Cadastrar produto e consultar CEP | Aprovado |
+| 6 | Editar produto cadastrado | Aprovado |
+| 7 | Remover produto de teste | Aprovado |
+| 8 | Navegar pelo teclado usando Tab e Enter | Aprovado |
+| 9 | Abrir e utilizar o VLibras nas duas abas sem bloquear controles | Aprovado |
+| 10 | Identificar os controles com o leitor de tela do Windows | Aprovado |
+
+### Evidências visuais
+
+Foram registradas sete capturas de tela para o relatório acadêmico, incluindo: tela de produtos no modo claro, modo escuro, controles de aumento e diminuição de fonte, persistência das preferências e VLibras em funcionamento. As capturas fazem parte do **relatório da P2 — Aula 1**; para exibi-las diretamente no GitHub, os arquivos de imagem precisam ser adicionados ao repositório e os caminhos referenciados aqui.
+
+### Limitações conhecidas
+
+- O VLibras realiza tradução automática e pode recorrer à **datilologia** (soletração manual) em algumas palavras; isso não garante tradução perfeita em todos os contextos.
+- A persistência por `localStorage` e a integração do VLibras foram validadas na **versão web**. Não foram registrados testes equivalentes em Android ou iOS.
+- A presença de rótulos e a aprovação dos testes realizados não substituem uma auditoria completa de acessibilidade.
 
 ---
 
 # Status
 
-**P1 concluída.**
+**P1 concluída; P2 — Aula 1 de Acessibilidade implementada e testada na versão web.**
 
 A aplicação possui uma versão Web publicada e funcional, integrada a uma API REST própria e ao MongoDB Atlas para persistência dos produtos em nuvem.
 
-O projeto continuará sendo evoluído de acordo com as próximas atividades propostas durante a disciplina.
+O projeto continuará sendo evoluído conforme as próximas atividades da disciplina. A P2 foi validada na versão web; não há validação equivalente registrada para Android ou iOS.
 
 ---
 
@@ -439,14 +657,17 @@ O projeto continuará sendo evoluído de acordo com as próximas atividades prop
 Etapa - Desenvolvimento
 
 Aulas 2 e 3 - Definição do problema, proposta e desenvolvimento do primeiro MVP
+
 Aula 4 - `useState`, `TextInput`, validações, `FlatList`, remoção e componente reutilizável
+
 Aula 5 - Integração com API REST ViaCEP, requisição `GET`, JSON, loading e tratamento de erros
+
 Aula 6 - Persistência com `localStorage`, recuperação automática dos dados, edição, remoção e tratamento de erros
+
 P1 - Backend Node.js/Express, CRUD, MongoDB Atlas, hospedagem no Render e publicação do frontend no Vercel
 
 ---
 
 # Próximas etapas
 
-Após a conclusão da P1, o projeto continuará sendo evoluído conforme as próximas atividades propostas na disciplina.
-
+Após a P1 e a Aula 1 da P2, o projeto continuará sendo evoluído conforme as próximas atividades propostas na disciplina.
