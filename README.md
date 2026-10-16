@@ -642,13 +642,116 @@ Foram registradas sete capturas de tela para o relatório acadêmico, incluindo:
 
 ---
 
+# P2 — Aula 9: Perfis e Sessão
+
+## Objetivo
+
+Implementar autenticação de usuários, gerenciamento de perfis e controle de sessões no aplicativo Menor Preço Saqua, utilizando Supabase Auth e políticas de segurança no banco de dados.
+
+## Tecnologias utilizadas
+
+- React Native e Expo Router
+- TypeScript
+- Supabase Authentication
+- PostgreSQL e Row Level Security (RLS)
+- AsyncStorage para persistência local da autenticação
+
+## Funcionalidades implementadas
+
+- Login de usuários cadastrados no Supabase.
+- Identificação do usuário autenticado.
+- Visualização dos dados do próprio perfil.
+- Edição do nome do usuário.
+- Separação dos dados de perfil entre diferentes contas.
+- Encerramento manual da sessão (logout).
+- Expiração automática por inatividade.
+- Restrição de acesso aos perfis por meio de políticas RLS.
+
+## Segurança e controle de sessão
+
+A autenticação é realizada pelo Supabase Auth.
+
+A tabela `profiles` armazena os dados dos perfis, enquanto a tabela `session_leases` auxilia no controle de sessões ativas.
+
+As políticas RLS restringem a consulta e a atualização dos perfis ao usuário autenticado com sessão válida.
+
+O controle de inatividade foi testado com um intervalo de aproximadamente 2 minutos.
+
+## Testes realizados
+
+| Nº | Teste | Resultado |
+|---|---|---|
+| 1 | Login do Aluno A | Aprovado |
+| 2 | Visualização do perfil do Aluno A | Aprovado |
+| 3 | Alteração do nome do usuário | Aprovado |
+| 4 | Logout e retorno à tela de login | Aprovado |
+| 5 | Login do Aluno B e separação dos perfis | Aprovado |
+| 6 | Expiração da sessão por inatividade | Aprovado |
+| 7 | Bloqueio de leitura sem sessão ativa via RLS | Aprovado |
+| 8 | Bloqueio de atualização sem sessão ativa via RLS | Aprovado |
+
+## Evidências visuais — Aula 9
+
+### 1. Tela de login
+
+![Tela de login](docs/imagens/aula9/aula9-login.png)
+
+### 2. Perfil do Aluno A
+
+![Perfil do Aluno A](docs/imagens/aula9/aula9-perfil-aluno-a.png)
+
+### 3. Edição do perfil
+
+![Edição do perfil](docs/imagens/aula9/aula9-edicao-perfil.png)
+
+### 4. Perfil do Aluno B
+
+![Perfil do Aluno B](docs/imagens/aula9/aula9-perfil-aluno-b.png)
+
+### 5. Logout
+
+![Encerramento da sessão](docs/imagens/aula9/aula9-logout.png)
+
+### 6. Expiração automática da sessão
+
+![Sessão expirada por inatividade](docs/imagens/aula9/aula9-sessao-expirada.png)
+
+### 7. Segurança com RLS
+
+![Teste de segurança RLS](docs/imagens/aula9/aula9-seguranca-rls.png)
+
+O teste de atualização sem sessão válida retornou `perfis_atualizados = 0`, demonstrando o bloqueio da operação no cenário avaliado.
+
+## Arquivos principais
+
+- `app/login.tsx` — tela de autenticação.
+- `app/(tabs)/perfil.tsx` — visualização e edição do perfil.
+- `src/contexts/SessionProvider.tsx` — gerenciamento da sessão.
+- `src/services/supabase.ts` — configuração do cliente Supabase.
+- `app/_layout.tsx` — integração do contexto de sessão.
+- `app/(tabs)/_layout.tsx` — navegação entre as abas.
+
+## Limitações e observações
+
+- Os testes funcionais documentados foram realizados na versão web.
+- Ainda não há evidência de validação equivalente em dispositivos Android ou iOS.
+- As credenciais de configuração são mantidas fora do repositório por meio do arquivo `.env`.
+- As políticas RLS fornecem proteção no banco de dados e devem continuar sendo verificadas em futuras alterações.
+
+---
+
+
 # Status
 
-**P1 concluída; P2 — Aula 1 de Acessibilidade implementada e testada na versão web.**
+**P1 concluída. P2 — Aula 1: Acessibilidade e Aula 9: Perfis e Sessão implementadas e testadas na versão web.**
 
-A aplicação possui uma versão Web publicada e funcional, integrada a uma API REST própria e ao MongoDB Atlas para persistência dos produtos em nuvem.
+O Menor Preço Saqua possui uma versão web publicada, integrada a uma API REST própria e ao MongoDB Atlas para persistência dos produtos em nuvem.
 
-O projeto continuará sendo evoluído conforme as próximas atividades da disciplina. A P2 foi validada na versão web; não há validação equivalente registrada para Android ou iOS.
+Na P2, foram acrescentados recursos de acessibilidade, autenticação com Supabase, gerenciamento de perfis e controle de sessões.
+
+A Aula 9 foi validada por testes funcionais de login, edição de perfil, logout, expiração por inatividade e verificações de segurança RLS.
+
+Ainda não foram registradas evidências equivalentes de funcionamento em dispositivos Android ou iOS.
 
 ---
 
@@ -666,8 +769,25 @@ Aula 6 - Persistência com `localStorage`, recuperação automática dos dados, 
 
 P1 - Backend Node.js/Express, CRUD, MongoDB Atlas, hospedagem no Render e publicação do frontend no Vercel
 
+
+P2 — Aula 1: Implementação de recursos de acessibilidade, incluindo tema claro e escuro, ajuste do tamanho da fonte, persistência das preferências, navegação por teclado, suporte a leitor de tela e integração com VLibras.
+
+P2 — Aula 2: Implementação de autenticação com Supabase Auth, gerenciamento de perfis, edição de dados, logout, expiração de sessão por inatividade e políticas de segurança RLS.
+
+
 ---
 
 # Próximas etapas
 
-Após a P1 e a Aula 1 da P2, o projeto continuará sendo evoluído conforme as próximas atividades propostas na disciplina.
+
+# Próximas etapas
+
+Após a conclusão da P1 e a implementação das Aulas 1 e 2 da P2, o projeto Menor Preço Saqua continuará evoluindo conforme as atividades propostas na disciplina.
+
+As próximas atividades incluem:
+
+- Conferir os requisitos oficiais da Aula 9 e identificar possíveis pendências.
+- Validar as funcionalidades em dispositivos Android ou iOS, quando aplicável.
+- Realizar testes adicionais de autenticação e controle de sessão.
+- Manter a documentação e as evidências atualizadas no GitHub.
+- Preservar as funcionalidades de cadastro, consulta, edição e exclusão de produtos.
