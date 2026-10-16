@@ -46,6 +46,21 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      <Tabs.Screen
+        name="perfil"
+        options={{
+          title: 'Meu Perfil',
+          tabBarAccessibilityLabel: 'Aba meu perfil',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons
+              name="person-circle-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
