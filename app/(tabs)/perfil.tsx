@@ -1,15 +1,16 @@
 
 import { useSession } from '@/src/contexts/SessionProvider';
+import { enviarNotificacaoTeste } from '@/src/services/notificacoes';
 import { supabase } from '@/src/services/supabase';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
 type Profile = {
@@ -25,6 +26,7 @@ export default function PerfilScreen() {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testingNotification, setTestingNotification] = useState(false);
   const [message, setMessage] = useState('');
 
   const loadProfile = useCallback(async () => {
@@ -44,7 +46,9 @@ export default function PerfilScreen() {
       .single();
 
     if (error) {
-      setMessage('Não foi possível carregar o perfil: ' + error.message);
+      setMessage(
+        'Não foi possível carregar o perfil: ' + error.message
+      );
       setProfile(null);
     } else {
       setProfile(data);
@@ -72,22 +76,52 @@ export default function PerfilScreen() {
     setMessage('');
     touch();
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ name: newName })
-      .eq('id', user.id)
-      .select('id, name, role')
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ name: newName })
+        .eq('id', user.id)
+        .select('id, name, role')
+        .single();
 
-    if (error) {
-      setMessage('Erro ao salvar: ' + error.message);
-    } else {
-      setProfile(data);
-      setName(data.name);
-      setMessage('Nome atualizado com sucesso!');
+      if (error) {
+        setMessage('Erro ao salvar: ' + error.message);
+      } else {
+        setProfile(data);
+        setName(data.name);
+        setMessage('Nome atualizado com sucesso!');
+      }
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? 'Erro ao salvar: ' + error.message
+          : 'Não foi possível salvar o nome.'
+      );
+    } finally {
+      setSaving(false);
     }
+  }
 
-    setSaving(false);
+  async function testarNotificacao() {
+    if (testingNotification) return;
+
+    touch();
+    setTestingNotification(true);
+    setMessage('');
+
+    try {
+      await enviarNotificacaoTeste();
+
+      setMessage('Notificação de teste agendada!');
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível enviar a notificação.'
+      );
+    } finally {
+      setTestingNotification(false);
+    }
   }
 
   if (!user) return null;
@@ -102,10 +136,14 @@ export default function PerfilScreen() {
         <Text style={styles.title}>Meu Perfil</Text>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#16834a" />
+          <ActivityIndicator
+            size="large"
+            color="#16834a"
+          />
         ) : (
           <>
             <Text style={styles.label}>Nome</Text>
+
             <TextInput
               style={styles.input}
               value={name}
@@ -118,11 +156,13 @@ export default function PerfilScreen() {
             />
 
             <Text style={styles.label}>E-mail</Text>
+
             <Text style={styles.readOnly}>
               {user.email ?? 'Não informado'}
             </Text>
 
             <Text style={styles.label}>Papel</Text>
+
             <Text style={styles.readOnly}>
               {profile?.role ?? 'Não disponível'}
             </Text>
@@ -131,7 +171,10 @@ export default function PerfilScreen() {
               <Text
                 style={[
                   styles.message,
-                  message.startsWith('Nome atualizado') && styles.success,
+                  (
+                    message.startsWith('Nome atualizado') ||
+                    message.startsWith('Notificação de teste agendada')
+                  ) && styles.success,
                 ]}
                 accessibilityRole="alert"
               >
@@ -140,7 +183,10 @@ export default function PerfilScreen() {
             ) : null}
 
             <Pressable
-              style={[styles.saveButton, (saving || !profile) && styles.disabled]}
+              style={[
+                styles.saveButton,
+                (saving || !profile) && styles.disabled,
+              ]}
               onPress={() => void saveName()}
               disabled={saving || !profile}
               accessibilityRole="button"
@@ -150,16 +196,37 @@ export default function PerfilScreen() {
                 {saving ? 'Salvando...' : 'Salvar nome'}
               </Text>
             </Pressable>
+
+            <Pressable
+              style={[
+                styles.notificationButton,
+                testingNotification && styles.disabled,
+              ]}
+              onPress={() => void testarNotificacao()}
+              disabled={testingNotification}
+              accessibilityRole="button"
+              accessibilityLabel="Testar notificação"
+            >
+              <Text style={styles.buttonText}>
+                {testingNotification
+                  ? 'Enviando...'
+                  : 'Testar notificação'}
+              </Text>
+            </Pressable>
           </>
         )}
 
         <Pressable
           style={styles.logoutButton}
-          onPress={() => void logout('Você saiu da sua conta')}
+          onPress={() =>
+            void logout('Você saiu da sua conta')
+          }
           accessibilityRole="button"
           accessibilityLabel="Sair da conta"
         >
-          <Text style={styles.logoutText}>Sair da conta</Text>
+          <Text style={styles.logoutText}>
+            Sair da conta
+          </Text>
         </Pressable>
       </View>
     </ScrollView>
@@ -171,11 +238,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f5f1',
   },
+
   content: {
     padding: 20,
     flexGrow: 1,
     justifyContent: 'center',
   },
+
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -184,6 +253,7 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     alignSelf: 'center',
   },
+
   title: {
     fontSize: 26,
     fontWeight: 'bold',
@@ -191,12 +261,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
+
   label: {
     fontSize: 15,
     fontWeight: '600',
     color: '#222',
     marginBottom: 7,
   },
+
   input: {
     borderWidth: 1,
     borderColor: '#aaa',
@@ -206,6 +278,7 @@ const styles = StyleSheet.create({
     color: '#111',
     marginBottom: 18,
   },
+
   readOnly: {
     backgroundColor: '#f0f0f0',
     borderRadius: 8,
@@ -214,14 +287,17 @@ const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 18,
   },
+
   message: {
     color: '#b00020',
     textAlign: 'center',
     marginBottom: 15,
   },
+
   success: {
     color: '#16834a',
   },
+
   saveButton: {
     backgroundColor: '#16834a',
     borderRadius: 8,
@@ -229,14 +305,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 14,
   },
+
+  notificationButton: {
+    backgroundColor: '#16834a',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+
   disabled: {
     opacity: 0.6,
   },
+
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
+
   logoutButton: {
     borderWidth: 1,
     borderColor: '#b00020',
@@ -244,6 +331,7 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: 'center',
   },
+
   logoutText: {
     color: '#b00020',
     fontSize: 16,

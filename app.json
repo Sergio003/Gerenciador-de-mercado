@@ -39,7 +39,9 @@
           }
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "expo-notifications",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
