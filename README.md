@@ -254,7 +254,7 @@ A persistência com `localStorage` é utilizada na versão Web do aplicativo. Po
 
 ---
 
-### Prints da aplicação — Aula 6  
+### Prints da aplicação — Aula 6
 
 #### Persistência dos dados após recarregar a página
 
@@ -272,7 +272,7 @@ A persistência com `localStorage` é utilizada na versão Web do aplicativo. Po
 
 ![Produto atualizado](produto-atualizado.png)
 
-#### Validação dos campos obrigatórios   
+#### Validação dos campos obrigatórios
 
 ![Validação de campos](erro-campo-vazio.png)
 
@@ -330,7 +330,7 @@ Read - `GET` - Listar os produtos cadastrados
 
 Update - `PUT` - Editar um produto
 
-  Delete - `DELETE` - Excluir um produto
+Delete - `DELETE` - Excluir um produto
 
 ### Endpoints
 
@@ -509,35 +509,62 @@ Na Aula 6, o `localStorage` foi utilizado para demonstrar a persistência local 
 # Estrutura principal do projeto
 
 ```text
+
 Gerenciador-de-mercado-final/
+
 ├── app/
-│   ├── _layout.tsx
-│   └── (tabs)/
-│       ├── _layout.tsx
-│       ├── index.tsx
-│       └── acessibilidade.tsx
+
+│   ├── \_layout.tsx
+
+│   └── (tabs)/
+
+│       ├── \_layout.tsx
+
+│       ├── index.tsx
+
+│       └── acessibilidade.tsx
+
 ├── backend/
-│   ├── models/
-│   │   └── Produto.js
-│   ├── package.json
-│   ├── package-lock.json
-│   └── server.js
+
+│   ├── models/
+
+│   │   └── Produto.js
+
+│   ├── package.json
+
+│   ├── package-lock.json
+
+│   └── server.js
+
 ├── src/
-│   ├── components/
-│   │   └── ProdutoItem.tsx
-│   ├── screens/
-│   │   └── CadastroProdutoScreen.tsx
-│   └── services/
-│       ├── produtosApi.ts
-│       ├── viacep.ts
-│       └── acessibilidade.ts
+
+│   ├── components/
+
+│   │   └── ProdutoItem.tsx
+
+│   ├── screens/
+
+│   │   └── CadastroProdutoScreen.tsx
+
+│   └── services/
+
+│       ├── produtosApi.ts
+
+│       ├── viacep.ts
+
+│       └── acessibilidade.ts
+
 ├── assets/
+
 ├── .gitignore
+
 ├── package.json
+
 └── README.md
+
 ```
 
-> O arquivo `backend/.env` existe apenas no ambiente local e não é enviado ao repositório público.
+\> O arquivo `backend/.env` existe apenas no ambiente local e não é enviado ao repositório público.
 
 ---
 
@@ -557,10 +584,10 @@ Gerenciador-de-mercado-final/
 
 A primeira atividade da P2 acrescentou recursos de acessibilidade à versão web do **Menor Preço Saqua**, preservando as operações de cadastro, consulta, edição e exclusão de produtos.
 
-
 ## Evidências da P2 — Aula 1: Acessibilidade
 
 As imagens abaixo demonstram os recursos de acessibilidade
+
 implementados no Menor Preço Saqua.
 
 ### 1. Tela de produtos — Modo claro
@@ -592,25 +619,37 @@ implementados no Menor Preço Saqua.
 ![Recurso de Libras em funcionamento](p2-leitor-tela.png)
 
 **Observação:** o leitor de tela do Windows foi testado
+
 e aprovado, mas sua execução não é demonstrada
+
 diretamente pela captura de tela.
 
 ## Funcionalidades implementadas
 
 - **Tamanho de fonte ajustável:** controles na aba **Acessibilidade** permitem selecionar tamanhos de 14 a 26, aplicados à interface de produtos.
+
 - **Tema claro e escuro:** opção para alternar a aparência do aplicativo.
+
 - **Persistência das preferências:** o tema e o tamanho da fonte permanecem após atualizar a página, utilizando `localStorage` no navegador (chaves `menorpreco-tema` e `menorpreco-tamanho-fonte`).
+
 - **Rótulos de acessibilidade:** identificação dos principais campos e botões para tecnologias assistivas.
+
 - **VLibras:** integração do widget de tradução automática para Libras na versão web, disponível nas abas do aplicativo.
+
 - **Navegação por teclado:** os controles principais foram testados com `Tab` e `Enter`.
 
 ### Arquivos envolvidos
 
-- `app/_layout.tsx` — integração web do VLibras.
-- `app/(tabs)/_layout.tsx` — navegação entre as abas.
+- `app/\_layout.tsx` — integração web do VLibras.
+
+- `app/(tabs)/\_layout.tsx` — navegação entre as abas.
+
 - `app/(tabs)/acessibilidade.tsx` — configurações de tema e fonte.
+
 - `src/services/acessibilidade.ts` — leitura das preferências salvas.
+
 - `src/screens/CadastroProdutoScreen.tsx` — aplicação das preferências na tela de produtos.
+
 - `src/components/ProdutoItem.tsx` — aparência acessível dos cartões de produtos.
 
 ## Validação da P2 — Aula 1
@@ -618,16 +657,27 @@ diretamente pela captura de tela.
 Foram realizados e aprovados **10 testes na versão web**, conforme execução e confirmação da equipe:
 
 | Nº | Teste | Resultado |
+
 |---|---|---|
+
 | 1 | Alternar o tema claro/escuro nas duas abas | Aprovado |
+
 | 2 | Aumentar a fonte até 26 sem cortes | Aprovado |
+
 | 3 | Diminuir a fonte até 14 e verificar a legibilidade | Aprovado |
+
 | 4 | Atualizar a página com F5 e manter as preferências | Aprovado |
+
 | 5 | Cadastrar produto e consultar CEP | Aprovado |
+
 | 6 | Editar produto cadastrado | Aprovado |
+
 | 7 | Remover produto de teste | Aprovado |
+
 | 8 | Navegar pelo teclado usando Tab e Enter | Aprovado |
+
 | 9 | Abrir e utilizar o VLibras nas duas abas sem bloquear controles | Aprovado |
+
 | 10 | Identificar os controles com o leitor de tela do Windows | Aprovado |
 
 ### Evidências visuais
@@ -637,7 +687,9 @@ Foram registradas sete capturas de tela para o relatório acadêmico, incluindo:
 ### Limitações conhecidas
 
 - O VLibras realiza tradução automática e pode recorrer à **datilologia** (soletração manual) em algumas palavras; isso não garante tradução perfeita em todos os contextos.
-- A persistência por `localStorage` e a integração do VLibras foram validadas na **versão web**. Não foram registrados testes equivalentes em Android ou iOS.
+
+- A persistência por `localStorage` e a integração do VLibras foram validadas na **versão web**. Esta seção registra os testes originais da Aula 1 na web. Testes posteriores de acessibilidade no Android estão documentados na seção P2 — Aula 7; ainda não foram registrados testes equivalentes em iOS.
+
 - A presença de rótulos e a aprovação dos testes realizados não substituem uma auditoria completa de acessibilidade.
 
 ---
@@ -651,20 +703,31 @@ Implementar autenticação de usuários, gerenciamento de perfis e controle de s
 ## Tecnologias utilizadas
 
 - React Native e Expo Router
+
 - TypeScript
+
 - Supabase Authentication
+
 - PostgreSQL e Row Level Security (RLS)
+
 - AsyncStorage para armazenamento de preferências locais
 
 ## Funcionalidades implementadas
 
 - Login de usuários cadastrados no Supabase.
+
 - Identificação do usuário autenticado.
+
 - Visualização dos dados do próprio perfil.
+
 - Edição do nome do usuário.
+
 - Separação dos dados de perfil entre diferentes contas.
+
 - Encerramento manual da sessão (logout).
+
 - Expiração automática por inatividade.
+
 - Restrição de acesso aos perfis por meio de políticas RLS.
 
 ## Segurança e controle de sessão
@@ -680,14 +743,23 @@ O controle de inatividade foi testado com um intervalo de aproximadamente 2 minu
 ## Testes realizados
 
 | Nº | Teste | Resultado |
+
 |---|---|---|
+
 | 1 | Login do Aluno A | Aprovado |
+
 | 2 | Visualização do perfil do Aluno A | Aprovado |
+
 | 3 | Alteração do nome do usuário | Aprovado |
+
 | 4 | Logout e retorno à tela de login | Aprovado |
+
 | 5 | Login do Aluno B e separação dos perfis | Aprovado |
+
 | 6 | Expiração da sessão por inatividade | Aprovado |
+
 | 7 | Bloqueio de leitura sem sessão ativa via RLS | Aprovado |
+
 | 8 | Bloqueio de atualização sem sessão ativa via RLS | Aprovado |
 
 ## Evidências visuais — Aula 9
@@ -721,7 +793,6 @@ O controle de inatividade foi testado com um intervalo de aproximadamente 2 minu
 ![Teste de segurança RLS](docs/imagens/aula9/aula9-seguranca-rls.png)
 
 O teste de atualização sem sessão válida retornou `perfis_atualizados = 0`, demonstrando o bloqueio da operação no cenário avaliado.
-
 
 ## Evidências de testes no Android — Aula 9
 
@@ -772,13 +843,21 @@ Após o logout do Aluno A e o login do Aluno B, foram exibidos os dados da segun
 ### Resultado dos testes no Android
 
 | Teste | Resultado |
+
 |---|---|
+
 | Login e acesso à tela principal | Aprovado |
+
 | Expiração após aproximadamente 2 minutos | Aprovado |
+
 | Encerramento ao sair do primeiro plano | Aprovado |
+
 | Fechamento e reabertura do Expo Go | Aprovado |
+
 | Visualização do perfil do Aluno A | Aprovado |
+
 | Logout do Aluno A | Aprovado |
+
 | Login do Aluno B e separação dos perfis | Aprovado |
 
 **Observação:** os testes foram executados no Expo Go em Android. O comportamento de um aplicativo instalado como versão independente ainda deverá ser validado separadamente.
@@ -786,26 +865,94 @@ Após o logout do Aluno A e o login do Aluno B, foram exibidos os dados da segun
 ## Arquivos principais
 
 - `app/login.tsx` — tela de autenticação.
-- `app/(tabs)/perfil.tsx` — visualização e edição do perfil.
-- `src/contexts/SessionProvider.tsx` — gerenciamento da sessão.
-- `src/services/supabase.ts` — configuração do cliente Supabase.
-- `app/_layout.tsx` — integração do contexto de sessão.
-- `app/(tabs)/_layout.tsx` — navegação entre as abas.
 
+- `app/(tabs)/perfil.tsx` — visualização e edição do perfil.
+
+- `src/contexts/SessionProvider.tsx` — gerenciamento da sessão.
+
+- `src/services/supabase.ts` — configuração do cliente Supabase.
+
+- `app/\_layout.tsx` — integração do contexto de sessão.
+
+- `app/(tabs)/\_layout.tsx` — navegação entre as abas.
 
 ## Limitações e observações
 
 - Os testes funcionais da Aula 9 foram realizados na versão web e em um dispositivo Android utilizando o Expo Go compatível com o SDK 54.
+
 - No Android, foram validados login, visualização de perfis, logout, expiração por inatividade, encerramento ao sair do primeiro plano e reabertura sem restauração automática da sessão.
+
 - O comportamento de uma versão independente do aplicativo Android ainda não foi validado.
+
 - Ainda não foram realizados testes equivalentes em dispositivos iOS.
+
 - A configuração `persistSession: false` impede a persistência automática da sessão de autenticação pelo cliente Supabase.
+
 - O AsyncStorage é utilizado para armazenar preferências locais, como a configuração de autenticação biométrica.
+
 - As credenciais de configuração são mantidas fora do repositório por meio do arquivo `.env`.
+
 - As políticas RLS restringem o acesso aos dados e devem continuar sendo verificadas em futuras alterações.
 
 ---
 
+# P2 — Aula 7: Revisão Final e Evidências de Acessibilidade
+
+## Objetivo
+
+Realizar a revisão final dos recursos de acessibilidade do aplicativo Menor Preço Saqua, verificando a aplicação global do tema, o ajuste do tamanho da fonte e a persistência das preferências no Android.
+
+## Versão do aplicativo
+
+- Aplicativo: Menor Preço Saqua
+
+- Versão: 1.0.0
+
+- Expo SDK: 54
+
+- Linguagem: TypeScript
+
+- Branch: main
+
+- Commit de referência: d780208
+
+## Evidências visuais — Aula 7
+
+### A7-01 — Tela de Produtos no modo claro
+
+Demonstração da interface de produtos com o tema claro.
+
+![Produtos no modo claro](docs/imagens/aula7/a7-01-produtos-modo-claro.jpeg)
+
+### A7-02 — Tela de Produtos no modo escuro
+
+Demonstração da aplicação do tema escuro na tela de produtos.
+
+![Produtos no modo escuro](docs/imagens/aula7/a7-02-produtos-modo-escuro.jpeg)
+
+### A7-03 — Acessibilidade com fonte ampliada
+
+Demonstração da configuração do tamanho da fonte para 26.
+
+![Acessibilidade com fonte 26](docs/imagens/aula7/a7-03-acessibilidade-fonte-26.jpeg)
+
+### A7-04 — Meu Perfil no modo escuro
+
+Demonstração da aplicação das preferências de acessibilidade na tela Meu Perfil.
+
+![Meu Perfil no modo escuro](docs/imagens/aula7/a7-04-perfil-modo-escuro.jpeg)
+
+### A7-05 — Persistência das preferências
+
+Verificação da manutenção do tema escuro e da fonte 26 após fechar e reabrir o aplicativo no Expo Go.
+
+![Persistência das configurações](docs/imagens/aula7/a7-05-persistencia-acessibilidade.jpeg)
+
+## Resultado parcial da revisão
+
+As evidências registram a aplicação das configurações de acessibilidade em diferentes telas e a persistência das preferências no cenário testado.
+
+Os testes integrados, de segurança e os demais requisitos da revisão final serão documentados conforme sua execução.
 
 # Status
 
@@ -823,7 +970,6 @@ As evidências dos testes estão disponíveis na seção **P2 — Aula 9: Perfis
 
 **Pendências de validação:** testes equivalentes em dispositivos iOS e em uma versão Android instalada de forma independente do Expo Go.
 
-
 ---
 
 # Histórico de desenvolvimento
@@ -840,25 +986,26 @@ Aula 6 - Persistência com `localStorage`, recuperação automática dos dados, 
 
 P1 - Backend Node.js/Express, CRUD, MongoDB Atlas, hospedagem no Render e publicação do frontend no Vercel
 
-
 P2 — Aula 1: Implementação de recursos de acessibilidade, incluindo tema claro e escuro, ajuste do tamanho da fonte, persistência das preferências, navegação por teclado, suporte a leitor de tela e integração com VLibras.
 
-P2 — Aula 2: Implementação de autenticação com Supabase Auth, gerenciamento de perfis, edição de dados, logout, expiração de sessão por inatividade e políticas de segurança RLS.
+P2 — Aula 9: Implementação de autenticação com Supabase Auth, gerenciamento de perfis, edição de dados, logout, expiração de sessão por inatividade e políticas de segurança RLS.
 
+P2 — Aula 7: Revisão de acessibilidade no Android, com evidências de tema claro e escuro, fonte ampliada e persistência das preferências.
 
 ---
 
 # Próximas etapas
 
-
-# Próximas etapas
-
-Após a conclusão da P1 e a implementação das Aulas 1 e 2 da P2, o projeto Menor Preço Saqua continuará evoluindo conforme as atividades propostas na disciplina.
+Após a conclusão da P1 e o desenvolvimento das atividades da P2, o projeto Menor Preço Saqua continuará evoluindo conforme as atividades propostas na disciplina.
 
 As próximas atividades incluem:
 
-- Conferir os requisitos oficiais da Aula 9 e identificar possíveis pendências.
-- Validar as funcionalidades em dispositivos Android ou iOS, quando aplicável.
+- Conferir os requisitos oficiais da Aula 7 e identificar possíveis pendências da revisão final.
+
+- Validar as funcionalidades em uma versão Android independente do Expo Go e em iOS, quando aplicável.
+
 - Realizar testes adicionais de autenticação e controle de sessão.
+
 - Manter a documentação e as evidências atualizadas no GitHub.
+
 - Preservar as funcionalidades de cadastro, consulta, edição e exclusão de produtos.
