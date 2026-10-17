@@ -1,7 +1,20 @@
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { SessionProvider, useSession } from '@/src/contexts/SessionProvider';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import {
+  AccessibilityProvider,
+  useAccessibility,
+} from '@/src/contexts/AccessibilityProvider';
+
+import {
+  SessionProvider,
+  useSession,
+} from '@/src/contexts/SessionProvider';
+
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from '@react-navigation/native';
+
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -12,12 +25,12 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-// Navegação protegida pelo estado de autenticação.
+// Controla o acesso às telas conforme o login.
 function AppNavigator() {
   const { user } = useSession();
 
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!user}>
         <Stack.Screen
           name="login"
@@ -30,9 +43,11 @@ function AppNavigator() {
           name="(tabs)"
           options={{ headerShown: false }}
         />
+
         <Stack.Screen
           name="modal"
           options={{
+            headerShown: true,
             presentation: 'modal',
             title: 'Modal',
           }}
@@ -42,20 +57,34 @@ function AppNavigator() {
   );
 }
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+// Utiliza o tema selecionado nas configurações de acessibilidade.
+function AppComTema() {
+  const { tema } = useAccessibility();
 
+  const escuro = tema === 'escuro';
+
+  return (
+    <ThemeProvider value={escuro ? DarkTheme : DefaultTheme}>
+      <AppNavigator />
+      <StatusBar style={escuro ? 'light' : 'dark'} />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
   useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') {
+    if (
+      Platform.OS !== 'web' ||
+      typeof document === 'undefined'
+    ) {
       return;
     }
 
-    // Evita carregar o VLibras mais de uma vez.
+    // Impede que o VLibras seja carregado mais de uma vez.
     if (document.getElementById('vlibras-script')) {
       return;
     }
 
-    // Adiciona o componente do VLibras à página.
     const container = document.createElement('div');
     container.setAttribute('vw', '');
     container.className = 'enabled';
@@ -74,9 +103,10 @@ export default function RootLayout() {
     wrapper.appendChild(topWrapper);
     container.appendChild(botao);
     container.appendChild(wrapper);
+
     document.body.appendChild(container);
 
-    // Carrega o script oficial do VLibras.
+    // Carrega o VLibras na versão web.
     const script = document.createElement('script');
     script.id = 'vlibras-script';
     script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
@@ -103,10 +133,9 @@ export default function RootLayout() {
 
   return (
     <SessionProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AppNavigator />
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <AccessibilityProvider>
+        <AppComTema />
+      </AccessibilityProvider>
     </SessionProvider>
   );
 }

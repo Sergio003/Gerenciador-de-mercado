@@ -1,4 +1,5 @@
 
+import { useAccessibility } from '@/src/contexts/AccessibilityProvider';
 import { useSession } from '@/src/contexts/SessionProvider';
 import { enviarNotificacaoTeste } from '@/src/services/notificacoes';
 import { supabase } from '@/src/services/supabase';
@@ -21,6 +22,7 @@ type Profile = {
 
 export default function PerfilScreen() {
   const { user, logout, touch } = useSession();
+  const { tema, tamanhoFonte } = useAccessibility();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [name, setName] = useState('');
@@ -28,6 +30,21 @@ export default function PerfilScreen() {
   const [saving, setSaving] = useState(false);
   const [testingNotification, setTestingNotification] = useState(false);
   const [message, setMessage] = useState('');
+
+  const escuro = tema === 'escuro';
+
+  const cores = {
+    fundo: escuro ? '#171717' : '#f5f7f5',
+    card: escuro ? '#252525' : '#ffffff',
+    texto: escuro ? '#ffffff' : '#333333',
+    secundario: escuro ? '#dddddd' : '#555555',
+    titulo: escuro ? '#62d99b' : '#16834a',
+    botao: escuro ? '#276749' : '#16834a',
+    campo: escuro ? '#333333' : '#ffffff',
+    leitura: escuro ? '#333333' : '#f0f0f0',
+    borda: escuro ? '#888888' : '#aaaaaa',
+    erro: escuro ? '#ff9aa9' : '#b00020',
+  };
 
   const loadProfile = useCallback(async () => {
     if (!user) {
@@ -111,7 +128,6 @@ export default function PerfilScreen() {
 
     try {
       await enviarNotificacaoTeste();
-
       setMessage('Notificação de teste agendada!');
     } catch (error) {
       setMessage(
@@ -128,42 +144,118 @@ export default function PerfilScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[
+        styles.container,
+        { backgroundColor: cores.fundo },
+      ]}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.card}>
-        <Text style={styles.title}>Meu Perfil</Text>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: cores.card },
+        ]}
+      >
+        <Text
+          style={[
+            styles.title,
+            {
+              color: cores.titulo,
+              fontSize: tamanhoFonte + 10,
+            },
+          ]}
+        >
+          Meu Perfil
+        </Text>
 
         {loading ? (
           <ActivityIndicator
             size="large"
-            color="#16834a"
+            color={cores.titulo}
           />
         ) : (
           <>
-            <Text style={styles.label}>Nome</Text>
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: cores.texto,
+                  fontSize: tamanhoFonte,
+                },
+              ]}
+            >
+              Nome
+            </Text>
 
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: cores.campo,
+                  borderColor: cores.borda,
+                  color: cores.texto,
+                  fontSize: tamanhoFonte,
+                },
+              ]}
               value={name}
               onChangeText={(value) => {
                 setName(value);
                 touch();
               }}
               placeholder="Seu nome"
+              placeholderTextColor={cores.secundario}
               accessibilityLabel="Nome do usuário"
             />
 
-            <Text style={styles.label}>E-mail</Text>
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: cores.texto,
+                  fontSize: tamanhoFonte,
+                },
+              ]}
+            >
+              E-mail
+            </Text>
 
-            <Text style={styles.readOnly}>
+            <Text
+              selectable
+              style={[
+                styles.readOnly,
+                {
+                  backgroundColor: cores.leitura,
+                  color: cores.secundario,
+                  fontSize: tamanhoFonte,
+                },
+              ]}
+            >
               {user.email ?? 'Não informado'}
             </Text>
 
-            <Text style={styles.label}>Papel</Text>
+            <Text
+              style={[
+                styles.label,
+                {
+                  color: cores.texto,
+                  fontSize: tamanhoFonte,
+                },
+              ]}
+            >
+              Papel
+            </Text>
 
-            <Text style={styles.readOnly}>
+            <Text
+              style={[
+                styles.readOnly,
+                {
+                  backgroundColor: cores.leitura,
+                  color: cores.secundario,
+                  fontSize: tamanhoFonte,
+                },
+              ]}
+            >
               {profile?.role ?? 'Não disponível'}
             </Text>
 
@@ -171,10 +263,14 @@ export default function PerfilScreen() {
               <Text
                 style={[
                   styles.message,
-                  (
-                    message.startsWith('Nome atualizado') ||
-                    message.startsWith('Notificação de teste agendada')
-                  ) && styles.success,
+                  {
+                    fontSize: tamanhoFonte,
+                    color:
+                      message.startsWith('Nome atualizado') ||
+                      message.startsWith('Notificação de teste agendada')
+                        ? cores.titulo
+                        : cores.erro,
+                  },
                 ]}
                 accessibilityRole="alert"
               >
@@ -185,6 +281,7 @@ export default function PerfilScreen() {
             <Pressable
               style={[
                 styles.saveButton,
+                { backgroundColor: cores.botao },
                 (saving || !profile) && styles.disabled,
               ]}
               onPress={() => void saveName()}
@@ -192,7 +289,12 @@ export default function PerfilScreen() {
               accessibilityRole="button"
               accessibilityLabel="Salvar nome"
             >
-              <Text style={styles.buttonText}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  { fontSize: tamanhoFonte },
+                ]}
+              >
                 {saving ? 'Salvando...' : 'Salvar nome'}
               </Text>
             </Pressable>
@@ -200,6 +302,7 @@ export default function PerfilScreen() {
             <Pressable
               style={[
                 styles.notificationButton,
+                { backgroundColor: cores.botao },
                 testingNotification && styles.disabled,
               ]}
               onPress={() => void testarNotificacao()}
@@ -207,7 +310,12 @@ export default function PerfilScreen() {
               accessibilityRole="button"
               accessibilityLabel="Testar notificação"
             >
-              <Text style={styles.buttonText}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  { fontSize: tamanhoFonte },
+                ]}
+              >
                 {testingNotification
                   ? 'Enviando...'
                   : 'Testar notificação'}
@@ -217,14 +325,25 @@ export default function PerfilScreen() {
         )}
 
         <Pressable
-          style={styles.logoutButton}
+          style={[
+            styles.logoutButton,
+            { borderColor: cores.erro },
+          ]}
           onPress={() =>
             void logout('Você saiu da sua conta')
           }
           accessibilityRole="button"
           accessibilityLabel="Sair da conta"
         >
-          <Text style={styles.logoutText}>
+          <Text
+            style={[
+              styles.logoutText,
+              {
+                color: cores.erro,
+                fontSize: tamanhoFonte,
+              },
+            ]}
+          >
             Sair da conta
           </Text>
         </Pressable>
@@ -236,7 +355,6 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f5f1',
   },
 
   content: {
@@ -246,7 +364,6 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -255,51 +372,35 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 26,
     fontWeight: 'bold',
-    color: '#16834a',
     textAlign: 'center',
     marginBottom: 24,
   },
 
   label: {
-    fontSize: 15,
     fontWeight: '600',
-    color: '#222',
     marginBottom: 7,
   },
 
   input: {
     borderWidth: 1,
-    borderColor: '#aaa',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
-    color: '#111',
     marginBottom: 18,
   },
 
   readOnly: {
-    backgroundColor: '#f0f0f0',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
-    color: '#555',
     marginBottom: 18,
   },
 
   message: {
-    color: '#b00020',
     textAlign: 'center',
     marginBottom: 15,
   },
 
-  success: {
-    color: '#16834a',
-  },
-
   saveButton: {
-    backgroundColor: '#16834a',
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
@@ -307,7 +408,6 @@ const styles = StyleSheet.create({
   },
 
   notificationButton: {
-    backgroundColor: '#16834a',
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
@@ -319,22 +419,20 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#ffffff',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 
   logoutButton: {
     borderWidth: 1,
-    borderColor: '#b00020',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
   },
 
   logoutText: {
-    color: '#b00020',
-    fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

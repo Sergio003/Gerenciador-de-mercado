@@ -1,85 +1,23 @@
 
-import React, { useEffect, useState } from 'react';
+import { useAccessibility } from '@/src/contexts/AccessibilityProvider';
+import React from 'react';
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
-const CHAVE_FONTE = 'menorpreco-tamanho-fonte';
-const CHAVE_TEMA = 'menorpreco-tema';
-
-type Tema = 'claro' | 'escuro';
-
-function carregarTamanhoFonte(): number {
-  try {
-    if (typeof window !== 'undefined') {
-      const valor = window.localStorage.getItem(CHAVE_FONTE);
-      const tamanho = Number(valor);
-
-      if (
-        valor !== null &&
-        Number.isFinite(tamanho) &&
-        tamanho >= 14 &&
-        tamanho <= 26
-      ) {
-        return tamanho;
-      }
-    }
-  } catch (erro) {
-    console.error('Erro ao carregar fonte:', erro);
-  }
-
-  return 16;
-}
-
-function carregarTema(): Tema {
-  try {
-    if (typeof window !== 'undefined') {
-      const valor = window.localStorage.getItem(CHAVE_TEMA);
-
-      if (valor === 'claro' || valor === 'escuro') {
-        return valor;
-      }
-    }
-  } catch (erro) {
-    console.error('Erro ao carregar tema:', erro);
-  }
-
-  return 'claro';
-}
-
 export default function AcessibilidadeScreen() {
-  const [tamanhoFonte, setTamanhoFonte] = useState(
-    carregarTamanhoFonte
-  );
-
-  const [tema, setTema] = useState<Tema>(carregarTema);
-  const [pronto, setPronto] = useState(false);
-
-  useEffect(() => {
-    setTamanhoFonte(carregarTamanhoFonte());
-    setTema(carregarTema());
-    setPronto(true);
-  }, []);
-
-  useEffect(() => {
-    if (!pronto) return;
-
-    try {
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(
-          CHAVE_FONTE,
-          String(tamanhoFonte)
-        );
-
-        window.localStorage.setItem(CHAVE_TEMA, tema);
-      }
-    } catch (erro) {
-      console.error('Erro ao salvar preferências:', erro);
-    }
-  }, [tamanhoFonte, tema, pronto]);
+  const {
+    tamanhoFonte,
+    tema,
+    pronto,
+    aumentarFonte,
+    diminuirFonte,
+    alterarTema,
+  } = useAccessibility();
 
   const escuro = tema === 'escuro';
 
@@ -91,26 +29,32 @@ export default function AcessibilidadeScreen() {
     borda: escuro ? '#888888' : '#cccccc',
   };
 
-  function aumentarFonte() {
-    setTamanhoFonte((atual) => Math.min(atual + 2, 26));
-  }
-
-  function diminuirFonte() {
-    setTamanhoFonte((atual) => Math.max(atual - 2, 14));
-  }
-
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: cores.fundo },
-      ]}
+    <ScrollView
+      style={{ backgroundColor: cores.fundo }}
+      contentContainerStyle={styles.container}
     >
-      <Text style={[styles.titulo, { color: cores.titulo }]}>
+      <Text
+        style={[
+          styles.titulo,
+          {
+            color: cores.titulo,
+            fontSize: tamanhoFonte + 8,
+          },
+        ]}
+      >
         Configurações de Acessibilidade
       </Text>
 
-      <Text style={[styles.subtitulo, { color: cores.texto }]}>
+      <Text
+        style={[
+          styles.subtitulo,
+          {
+            color: cores.texto,
+            fontSize: tamanhoFonte + 2,
+          },
+        ]}
+      >
         Ajuste do tamanho da fonte
       </Text>
 
@@ -134,11 +78,27 @@ export default function AcessibilidadeScreen() {
         </Pressable>
       </View>
 
-      <Text style={[styles.indicador, { color: cores.texto }]}>
+      <Text
+        style={[
+          styles.indicador,
+          {
+            color: cores.texto,
+            fontSize: tamanhoFonte,
+          },
+        ]}
+      >
         Tamanho selecionado: {pronto ? tamanhoFonte : 'Carregando...'}
       </Text>
 
-      <Text style={[styles.subtitulo, { color: cores.texto }]}>
+      <Text
+        style={[
+          styles.subtitulo,
+          {
+            color: cores.texto,
+            fontSize: tamanhoFonte + 2,
+          },
+        ]}
+      >
         Aparência do aplicativo
       </Text>
 
@@ -152,7 +112,7 @@ export default function AcessibilidadeScreen() {
               borderWidth: tema === 'claro' ? 3 : 1,
             },
           ]}
-          onPress={() => setTema('claro')}
+          onPress={() => alterarTema('claro')}
           accessibilityRole="button"
           accessibilityLabel="Ativar modo claro"
           accessibilityState={{ selected: tema === 'claro' }}
@@ -169,7 +129,7 @@ export default function AcessibilidadeScreen() {
               borderWidth: tema === 'escuro' ? 3 : 1,
             },
           ]}
-          onPress={() => setTema('escuro')}
+          onPress={() => alterarTema('escuro')}
           accessibilityRole="button"
           accessibilityLabel="Ativar modo escuro"
           accessibilityState={{ selected: tema === 'escuro' }}
@@ -178,7 +138,15 @@ export default function AcessibilidadeScreen() {
         </Pressable>
       </View>
 
-      <Text style={[styles.indicador, { color: cores.texto }]}>
+      <Text
+        style={[
+          styles.indicador,
+          {
+            color: cores.texto,
+            fontSize: tamanhoFonte,
+          },
+        ]}
+      >
         Tema selecionado: {tema}
       </Text>
 
@@ -189,35 +157,34 @@ export default function AcessibilidadeScreen() {
             {
               fontSize: tamanhoFonte,
               color: cores.texto,
+              lineHeight: tamanhoFonte * 1.5,
             },
           ]}
         >
-          Menor Preço Saqua: encontre produtos
-          e compare preços nos mercados da região.
+          Menor Preço Saqua: encontre produtos e compare preços nos mercados da região.
         </Text>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
     justifyContent: 'center',
   },
   titulo: {
-    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 24,
   },
   subtitulo: {
-    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
   },
   botoes: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
     marginBottom: 16,
   },
@@ -237,10 +204,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   indicador: {
-    fontSize: 14,
     marginBottom: 20,
   },
   exemplo: {
-    lineHeight: 36,
+    marginTop: 8,
   },
 });

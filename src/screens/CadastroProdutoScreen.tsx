@@ -1,6 +1,4 @@
-
-import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,13 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useAccessibility } from '../contexts/AccessibilityProvider';
 
 import ProdutoItem from '../components/ProdutoItem';
-import {
-  carregarTamanhoFonte,
-  carregarTema,
-  type Tema,
-} from '../services/acessibilidade';
+
 import { reproduzirSomCadastro } from '../services/audio';
 import {
   atualizarProduto,
@@ -47,23 +42,12 @@ export default function CadastroProdutoScreen() {
   const [sucesso, setSucesso] = useState('');
   const [produtoEditando, setProdutoEditando] = useState<string | null>(null);
 
-  // P2 - Preferências de acessibilidade
-  const [tema, setTema] = useState<Tema>(carregarTema);
-  const [tamanhoFonte, setTamanhoFonte] = useState(carregarTamanhoFonte);
-  const [preferenciasProntas, setPreferenciasProntas] = useState(false);
-
-  useEffect(() => {
-    setTema(carregarTema());
-    setTamanhoFonte(carregarTamanhoFonte());
-    setPreferenciasProntas(true);
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      setTema(carregarTema());
-      setTamanhoFonte(carregarTamanhoFonte());
-    }, [])
-  );
+  // P2 - Preferências globais de acessibilidade
+  const {
+    tema,
+    tamanhoFonte,
+    pronto: preferenciasProntas,
+  } = useAccessibility();
 
   // P1 - Carrega produtos locais e sincroniza com a API
   useEffect(() => {
