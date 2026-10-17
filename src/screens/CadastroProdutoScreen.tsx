@@ -18,6 +18,7 @@ import {
   carregarTema,
   type Tema,
 } from '../services/acessibilidade';
+import { reproduzirSomCadastro } from '../services/audio';
 import {
   atualizarProduto,
   cadastrarProduto,
@@ -187,6 +188,11 @@ export default function CadastroProdutoScreen() {
       salvarLocalmente([...produtos, novoProduto]);
       limparFormulario();
       setSucesso('Produto cadastrado com sucesso!');
+
+      reproduzirSomCadastro().catch((error) => {
+        console.warn('Não foi possível reproduzir o áudio:', error);
+      });
+      
     } catch (error) {
       setErro('Não foi possível cadastrar o produto no servidor.');
       setSucesso('');
