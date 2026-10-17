@@ -654,7 +654,7 @@ Implementar autenticação de usuários, gerenciamento de perfis e controle de s
 - TypeScript
 - Supabase Authentication
 - PostgreSQL e Row Level Security (RLS)
-- AsyncStorage para persistência local da autenticação
+- AsyncStorage para armazenamento de preferências locais
 
 ## Funcionalidades implementadas
 
@@ -722,6 +722,67 @@ O controle de inatividade foi testado com um intervalo de aproximadamente 2 minu
 
 O teste de atualização sem sessão válida retornou `perfis_atualizados = 0`, demonstrando o bloqueio da operação no cenário avaliado.
 
+
+## Evidências de testes no Android — Aula 9
+
+Os testes foram realizados em um dispositivo Android utilizando o Expo Go compatível com o SDK 54.
+
+### 1. Login no Android
+
+O aplicativo permitiu a autenticação e exibiu a tela principal com os produtos cadastrados.
+
+![Login realizado no Android](docs/imagens/aula9/aula9-android-login.jpeg)
+
+### 2. Expiração por inatividade
+
+Após aproximadamente 2 minutos sem interação, a sessão foi encerrada automaticamente e o aplicativo retornou à tela de login.
+
+![Expiração da sessão no Android](docs/imagens/aula9/aula9-android-inatividade.jpeg)
+
+### 3. Encerramento ao sair do primeiro plano
+
+Ao sair do aplicativo para utilizar outro e retornar, foi exigida uma nova autenticação.
+
+![Sessão encerrada ao sair do aplicativo](docs/imagens/aula9/aula9-android-segundo-plano.jpeg)
+
+### 4. Fechamento e reabertura
+
+Após fechar o Expo Go e reabrir o projeto, a sessão anterior não foi restaurada automaticamente no cenário testado.
+
+![Reabertura do aplicativo no Android](docs/imagens/aula9/aula9-android-reabertura.jpeg)
+
+### 5. Perfil do Aluno A
+
+O aplicativo exibiu os dados associados à conta do Aluno A.
+
+![Perfil do Aluno A no Android](docs/imagens/aula9/aula9-android-perfil-aluno-a.jpeg)
+
+### 6. Logout
+
+O encerramento manual da sessão retornou o aplicativo à tela de autenticação.
+
+![Logout no Android](docs/imagens/aula9/aula9-android-logout.jpeg)
+
+### 7. Perfil do Aluno B
+
+Após o logout do Aluno A e o login do Aluno B, foram exibidos os dados da segunda conta, sem apresentar os dados pessoais do usuário anterior.
+
+![Perfil do Aluno B no Android](docs/imagens/aula9/aula9-android-perfil-aluno-b.jpeg)
+
+### Resultado dos testes no Android
+
+| Teste | Resultado |
+|---|---|
+| Login e acesso à tela principal | Aprovado |
+| Expiração após aproximadamente 2 minutos | Aprovado |
+| Encerramento ao sair do primeiro plano | Aprovado |
+| Fechamento e reabertura do Expo Go | Aprovado |
+| Visualização do perfil do Aluno A | Aprovado |
+| Logout do Aluno A | Aprovado |
+| Login do Aluno B e separação dos perfis | Aprovado |
+
+**Observação:** os testes foram executados no Expo Go em Android. O comportamento de um aplicativo instalado como versão independente ainda deverá ser validado separadamente.
+
 ## Arquivos principais
 
 - `app/login.tsx` — tela de autenticação.
@@ -731,27 +792,37 @@ O teste de atualização sem sessão válida retornou `perfis_atualizados = 0`, 
 - `app/_layout.tsx` — integração do contexto de sessão.
 - `app/(tabs)/_layout.tsx` — navegação entre as abas.
 
+
 ## Limitações e observações
 
-- Os testes funcionais documentados foram realizados na versão web.
-- Ainda não há evidência de validação equivalente em dispositivos Android ou iOS.
+- Os testes funcionais da Aula 9 foram realizados na versão web e em um dispositivo Android utilizando o Expo Go compatível com o SDK 54.
+- No Android, foram validados login, visualização de perfis, logout, expiração por inatividade, encerramento ao sair do primeiro plano e reabertura sem restauração automática da sessão.
+- O comportamento de uma versão independente do aplicativo Android ainda não foi validado.
+- Ainda não foram realizados testes equivalentes em dispositivos iOS.
+- A configuração `persistSession: false` impede a persistência automática da sessão de autenticação pelo cliente Supabase.
+- O AsyncStorage é utilizado para armazenar preferências locais, como a configuração de autenticação biométrica.
 - As credenciais de configuração são mantidas fora do repositório por meio do arquivo `.env`.
-- As políticas RLS fornecem proteção no banco de dados e devem continuar sendo verificadas em futuras alterações.
+- As políticas RLS restringem o acesso aos dados e devem continuar sendo verificadas em futuras alterações.
 
 ---
 
 
 # Status
 
-**P1 concluída. P2 — Aula 1: Acessibilidade e Aula 9: Perfis e Sessão implementadas e testadas na versão web.**
+**P1 concluída. P2 — Aula 1: Acessibilidade e Aula 9: Perfis e Sessão implementadas, com testes funcionais realizados na web e no Android.**
 
 O Menor Preço Saqua possui uma versão web publicada, integrada a uma API REST própria e ao MongoDB Atlas para persistência dos produtos em nuvem.
 
 Na P2, foram acrescentados recursos de acessibilidade, autenticação com Supabase, gerenciamento de perfis e controle de sessões.
 
-A Aula 9 foi validada por testes funcionais de login, edição de perfil, logout, expiração por inatividade e verificações de segurança RLS.
+A Aula 9 foi validada por testes funcionais de login, visualização e edição de perfil, logout, expiração por inatividade e verificações de segurança RLS.
 
-Ainda não foram registradas evidências equivalentes de funcionamento em dispositivos Android ou iOS.
+No Android, utilizando o Expo Go compatível com o SDK 54, também foram realizados testes de login, visualização dos perfis dos Alunos A e B, logout, expiração após aproximadamente 2 minutos, encerramento da sessão ao sair do primeiro plano e reabertura sem restauração automática da sessão.
+
+As evidências dos testes estão disponíveis na seção **P2 — Aula 9: Perfis e Sessão** deste README.
+
+**Pendências de validação:** testes equivalentes em dispositivos iOS e em uma versão Android instalada de forma independente do Expo Go.
+
 
 ---
 
