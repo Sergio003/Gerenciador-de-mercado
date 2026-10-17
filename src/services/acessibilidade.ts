@@ -1,4 +1,6 @@
 
+import { Platform } from 'react-native';
+
 export const CHAVE_FONTE = 'menorpreco-tamanho-fonte';
 export const CHAVE_TEMA = 'menorpreco-tema';
 
@@ -6,10 +8,10 @@ export type Tema = 'claro' | 'escuro';
 
 export function carregarTamanhoFonte(): number {
   try {
-    if (typeof window !== 'undefined') {
-      const valor = window.localStorage.getItem(CHAVE_FONTE);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const valor = window.localStorage?.getItem(CHAVE_FONTE);
 
-      if (valor !== null) {
+      if (valor !== null && valor !== undefined) {
         const tamanho = Number(valor);
 
         if (
@@ -30,8 +32,8 @@ export function carregarTamanhoFonte(): number {
 
 export function carregarTema(): Tema {
   try {
-    if (typeof window !== 'undefined') {
-      const valor = window.localStorage.getItem(CHAVE_TEMA);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const valor = window.localStorage?.getItem(CHAVE_TEMA);
 
       if (valor === 'claro' || valor === 'escuro') {
         return valor;

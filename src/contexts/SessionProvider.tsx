@@ -3,12 +3,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { User } from '@supabase/supabase-js';
 import * as LocalAuthentication from 'expo-local-authentication';
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
 import { AppState, Platform, View } from 'react-native';
 
@@ -111,7 +111,9 @@ export function SessionProvider({
         });
 
       if (error) throw error;
-      if (!data.user) throw new Error('Usuário não encontrado');
+      if (!data.user) {
+        throw new Error('Usuário não encontrado');
+      }
 
       const enabled = await AsyncStorage.getItem(
         'native:' + data.user.id
@@ -178,7 +180,9 @@ export function SessionProvider({
       setUser(data.user);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Falha no login';
+        error instanceof Error
+          ? error.message
+          : 'Falha no login';
 
       await logout(message);
     } finally {
@@ -191,7 +195,9 @@ export function SessionProvider({
 
     if (enabled) {
       if (Platform.OS === 'web') {
-        throw new Error('Biometria disponível apenas no aplicativo nativo');
+        throw new Error(
+          'Biometria disponível apenas no aplicativo nativo'
+        );
       }
 
       const available =
@@ -286,7 +292,10 @@ export function SessionProvider({
   }, [logout]);
 
   useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined') {
+    if (
+      Platform.OS !== 'web' ||
+      typeof document === 'undefined'
+    ) {
       return;
     }
 
