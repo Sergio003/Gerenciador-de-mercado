@@ -564,7 +564,7 @@ Gerenciador-de-mercado-final/
 
 ```
 
-\> O arquivo `backend/.env` existe apenas no ambiente local e não é enviado ao repositório público.
+> O arquivo `backend/.env` existe apenas no ambiente local e não é enviado ao repositório público.
 
 ---
 
@@ -860,7 +860,7 @@ Após o logout do Aluno A e o login do Aluno B, foram exibidos os dados da segun
 
 | Login do Aluno B e separação dos perfis | Aprovado |
 
-**Observação:** os testes foram executados no Expo Go em Android. O comportamento de um aplicativo instalado como versão independente ainda deverá ser validado separadamente.
+**Observação:** os testes foram executados no Expo Go em Android. Posteriormente, na P2 — Aula 10, o login e a expiração por inatividade também foram validados em APK Android independente.
 
 ## Arquivos principais
 
@@ -882,7 +882,7 @@ Após o logout do Aluno A e o login do Aluno B, foram exibidos os dados da segun
 
 - No Android, foram validados login, visualização de perfis, logout, expiração por inatividade, encerramento ao sair do primeiro plano e reabertura sem restauração automática da sessão.
 
-- O comportamento de uma versão independente do aplicativo Android ainda não foi validado.
+- A versão independente do Android foi validada posteriormente na P2 — Aula 10 para login e expiração por inatividade; consulte a seção correspondente.
 
 - Ainda não foram realizados testes equivalentes em dispositivos iOS.
 
@@ -954,9 +954,163 @@ As evidências registram a aplicação das configurações de acessibilidade em 
 
 Os testes integrados, de segurança e os demais requisitos da revisão final serão documentados conforme sua execução.
 
+# P2 — Aula 10: Entrada com Recurso Nativo (Biometria)
+
+## Objetivo
+
+Integrar a autenticação biométrica disponibilizada pelo sistema operacional ao login remoto com Supabase, permitindo ativar ou desativar a entrada nativa por conta e aparelho, sem armazenar senhas nem capturar impressões digitais ou imagens faciais diretamente.
+
+> O material fornecido pelo professor identifica esta atividade como “Aula 3 — P2: Entrada com Recurso Nativo”. A equipe registra a implementação nesta seção como Aula 10, de acordo com a sequência utilizada no projeto.
+
+## Funcionalidades implementadas
+
+- Login remoto por e-mail e senha com Supabase Auth.
+- Ativação e desativação da biometria no perfil.
+- Preferência local de entrada nativa separada por conta e aparelho.
+- Verificação da disponibilidade da biometria e uso do diálogo nativo do Android.
+- Tratamento de confirmação, cancelamento e indisponibilidade sem liberar acesso indevido.
+- Controle remoto da sessão com `begin_session` e `touch_session`.
+- Encerramento da sessão após aproximadamente 2 minutos sem interação.
+- Geração e instalação de APK Android independente com EAS Build.
+
+## Arquivos principais
+
+- `app/(tabs)/perfil.tsx` — perfil e ativação/desativação da biometria.
+- `src/contexts/SessionProvider.tsx` — autenticação e ciclo de vida da sessão.
+- `src/services/supabase.ts` — integração com Supabase.
+- `app.json` — configurações nativas do aplicativo.
+- `eas.json` — perfil de build Android `preview`.
+
+## Configuração e execução
+
+Pré-requisitos: Node.js, npm e projeto Supabase configurado. Configure localmente o arquivo `.env` (não versionado):
+
+```dotenv
+EXPO_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_PUBLICAVEL
+```
+
+Para instalar dependências e iniciar o projeto:
+
+```bash
+npm install
+npx expo start
+```
+
+Para compilar o APK Android de teste:
+
+```bash
+npx eas-cli build --platform android --profile preview
+```
+
+As variáveis `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY` também devem estar configuradas no ambiente `preview` do EAS. Não versionar `.env`, senhas, tokens de sessão ou chaves secretas de serviço. A chave publicável é uma configuração de cliente, não uma chave de serviço privilegiada.
+
+## Testes realizados no Android
+
+| Nº | Cenário | Resultado |
+|---|---|---|
+| 1 | Tela de login remoto | Aprovado |
+| 2 | Perfil com opção de ativar biometria | Aprovado |
+| 3 | Ativação da biometria | Aprovado |
+| 4 | Exibição do diálogo nativo de autenticação | Aprovado |
+| 5 | Acesso à tela de produtos após confirmação | Aprovado |
+| 6 | Cancelamento mantém a entrada bloqueada | Aprovado |
+| 7 | Desativação da biometria | Aprovado |
+| 8 | Expiração após aproximadamente 2 minutos sem interação | Aprovado |
+| 9 | Biometria indisponível impede acesso | Aprovado |
+| 10 | Troca de aplicativo durante confirmação não libera acesso | Aprovado |
+| 11 | Preferência da conta A não aplicada automaticamente à conta B | Aprovado |
+
+Os 11 cenários acima foram documentados com capturas fornecidas durante a validação no Android. O login remoto e a expiração por inatividade foram confirmados também no APK instalado independentemente do Expo Go. A verificação de TypeScript com `npx tsc --noEmit` terminou sem erros. A disponibilidade de métodos alternativos, como PIN, depende do dispositivo e do sistema operacional.
+
+## Prints e evidências — Aula 10
+
+As imagens estão organizadas na pasta `docs/imagens/aula10/`. Os caminhos abaixo são relativos à raiz do repositório e serão exibidos no GitHub quando o README e os arquivos de imagem forem enviados juntos.
+
+### 1. Tela de login
+
+Tela de autenticação por e-mail e senha.
+
+![Tela de login](docs/imagens/aula10/aula10-login.jpg)
+
+### 2. Perfil do usuário
+
+Perfil da conta de teste com opção de ativar biometria.
+
+![Perfil do usuário](docs/imagens/aula10/aula10-perfil.jpg)
+
+### 3. Ativação da biometria
+
+Mensagem de confirmação e opção de desativar biometria.
+
+![Ativação da biometria](docs/imagens/aula10/aula10-ativar-biometria.jpg)
+
+### 4. Diálogo nativo do Android
+
+Solicitação de autenticação pelo sistema operacional e opção de PIN.
+
+![Diálogo nativo do Android](docs/imagens/aula10/aula10-dialogo-biometrico.jpg)
+
+### 5. Acesso após autenticação biométrica
+
+Tela de produtos acessível após confirmação biométrica.
+
+![Acesso após autenticação biométrica](docs/imagens/aula10/aula10-login-sucesso.jpg)
+
+### 6. Cancelamento do diálogo
+
+Mensagem de entrada não autorizada e permanência no login.
+
+![Cancelamento do diálogo](docs/imagens/aula10/aula10-cancelamento.jpg)
+
+### 7. Desativação da biometria
+
+Confirmação da desativação no perfil.
+
+![Desativação da biometria](docs/imagens/aula10/aula10-desativar-biometria.jpg)
+
+### 8. Expiração da sessão
+
+Retorno ao login após inatividade.
+
+![Expiração da sessão](docs/imagens/aula10/aula10-sessao-expirada.jpg)
+
+### 9. Biometria indisponível
+
+Mensagem de indisponibilidade e acesso não liberado.
+
+![Biometria indisponível](docs/imagens/aula10/aula10-biometria-indisponivel.jpg)
+
+### 10. Troca de aplicativo durante confirmação
+
+Retorno ao login com entrada não autorizada.
+
+![Troca de aplicativo durante confirmação](docs/imagens/aula10/aula10-troca-aplicativo.jpg)
+
+### 11. Preferência isolada entre contas
+
+Conta B com opção Ativar biometria, sem herdar a preferência da conta A.
+
+![Preferência isolada entre contas](docs/imagens/aula10/aula10-isolamento-contas.jpg)
+
+## Build Android e repositório
+
+- **APK Android:** [Build concluída no Expo](https://expo.dev/accounts/leovelloso/projects/menorpreco-saqua/builds/0ff11fdc-c8bf-4282-8cd0-399c727838b0).
+- **Código-fonte:** [Repositório Gerenciador-de-mercado](https://github.com/Sergio003/Gerenciador-de-mercado).
+- **Branch:** `main`.
+- **Commit da implementação:** `0924647` — `Aula 10: autenticacao, biometria e controle de sessao`.
+
+## Limitações
+
+- Não foram realizados testes em dispositivo iOS com Face ID.
+- Os resultados são relativos aos aparelhos e cenários efetivamente testados; não substituem validação em outros dispositivos e versões do sistema.
+- As capturas devem ser revisadas antes da publicação para evitar exposição de dados pessoais.
+
+---
+
 # Status
 
-**P1 concluída. P2 — Aula 1: Acessibilidade e Aula 9: Perfis e Sessão implementadas, com testes funcionais realizados na web e no Android.**
+**P1 concluída. P2 — Aulas 1, 7, 9 e 10 documentadas, com testes na web, no Expo Go e no APK Android independente.**
 
 O Menor Preço Saqua possui uma versão web publicada, integrada a uma API REST própria e ao MongoDB Atlas para persistência dos produtos em nuvem.
 
@@ -964,11 +1118,11 @@ Na P2, foram acrescentados recursos de acessibilidade, autenticação com Supaba
 
 A Aula 9 foi validada por testes funcionais de login, visualização e edição de perfil, logout, expiração por inatividade e verificações de segurança RLS.
 
-No Android, utilizando o Expo Go compatível com o SDK 54, também foram realizados testes de login, visualização dos perfis dos Alunos A e B, logout, expiração após aproximadamente 2 minutos, encerramento da sessão ao sair do primeiro plano e reabertura sem restauração automática da sessão.
+No Android, utilizando o Expo Go compatível com o SDK 54, foram realizados testes de login, visualização dos perfis dos Alunos A e B, logout, expiração após aproximadamente 2 minutos, encerramento ao sair do primeiro plano e reabertura sem restauração automática. Na Aula 10, login e expiração por inatividade foram confirmados também no APK independente.
 
-As evidências dos testes estão disponíveis na seção **P2 — Aula 9: Perfis e Sessão** deste README.
+As evidências estão disponíveis nas seções **P2 — Aula 9: Perfis e Sessão** e **P2 — Aula 10: Entrada com Recurso Nativo** deste README.
 
-**Pendências de validação:** testes equivalentes em dispositivos iOS e em uma versão Android instalada de forma independente do Expo Go.
+**Pendência de validação:** testes equivalentes em dispositivos iOS. A versão Android independente já foi validada para login e expiração por inatividade, com evidências adicionais de biometria na Aula 10.
 
 ---
 
@@ -992,6 +1146,8 @@ P2 — Aula 9: Implementação de autenticação com Supabase Auth, gerenciament
 
 P2 — Aula 7: Revisão de acessibilidade no Android, com evidências de tema claro e escuro, fonte ampliada e persistência das preferências.
 
+P2 — Aula 10: Integração da autenticação biométrica ao login remoto, controle de sessão, geração e testes de APK Android independente.
+
 ---
 
 # Próximas etapas
@@ -1002,7 +1158,7 @@ As próximas atividades incluem:
 
 - Conferir os requisitos oficiais da Aula 7 e identificar possíveis pendências da revisão final.
 
-- Validar as funcionalidades em uma versão Android independente do Expo Go e em iOS, quando aplicável.
+- Ampliar os testes no APK Android independente e validar em iOS, quando aplicável.
 
 - Realizar testes adicionais de autenticação e controle de sessão.
 
