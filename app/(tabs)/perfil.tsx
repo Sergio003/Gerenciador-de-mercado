@@ -1,8 +1,8 @@
 
 import { useAccessibility } from '@/src/contexts/AccessibilityProvider';
 import { useSession } from '@/src/contexts/SessionProvider';
-import { enviarNotificacaoTeste } from '@/src/services/notificacoes';
 import { supabase } from '@/src/services/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -21,7 +21,7 @@ type Profile = {
 };
 
 export default function PerfilScreen() {
-  const { user, logout, touch } = useSession();
+  const { user, logout, touch, enableNative } = useSession();
   const { tema, tamanhoFonte } = useAccessibility();
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -30,6 +30,9 @@ export default function PerfilScreen() {
   const [saving, setSaving] = useState(false);
   const [testingNotification, setTestingNotification] = useState(false);
   const [message, setMessage] = useState('');
+
+  const [nativeEnabled, setNativeEnabled] = useState(false);
+  const [loadingNative, setLoadingNative] = useState(false);
 
   const escuro = tema === 'escuro';
 
@@ -46,6 +49,52 @@ export default function PerfilScreen() {
     erro: escuro ? '#ff9aa9' : '#b00020',
   };
 
+  // Carrega a preferência biométrica da conta conectada.
+  useEffect(() => {
+    let cancelled = false;
+
+    setNativeEnabled(false);
+
+    if (!user) {
+      setLoadingNative(false);
+      return;
+    }
+
+    const userId = user.id;
+
+    async function loadNativePreference() {
+      setLoadingNative(true);
+
+      try {
+        const enabled = await AsyncStorage.getItem(
+          'native:' + userId
+        );
+
+        if (!cancelled) {
+          setNativeEnabled(enabled === 'true');
+        }
+      } catch {
+        if (!cancelled) {
+          setNativeEnabled(false);
+          setMessage(
+            'Não foi possível carregar a preferência biométrica.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingNative(false);
+        }
+      }
+    }
+
+    void loadNativePreference();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  // Carrega os dados do perfil no Supabase.
   const loadProfile = useCallback(async () => {
     if (!user) {
       setProfile(null);
@@ -79,6 +128,7 @@ export default function PerfilScreen() {
     void loadProfile();
   }, [loadProfile]);
 
+  // Atualiza o nome do usuário.
   async function saveName() {
     if (!user || !profile || saving) return;
 
@@ -119,6 +169,37 @@ export default function PerfilScreen() {
     }
   }
 
+  // Ativa ou desativa a autenticação biométrica.
+  async function alterarBiometria() {
+    if (!user || loadingNative) return;
+
+    const novoEstado = !nativeEnabled;
+
+    setLoadingNative(true);
+    setMessage('');
+
+    try {
+      await enableNative(novoEstado);
+
+      setNativeEnabled(novoEstado);
+
+      setMessage(
+        novoEstado
+          ? 'Autenticação biométrica ativada com sucesso!'
+          : 'Autenticação biométrica desativada com sucesso!'
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível alterar a autenticação biométrica.'
+      );
+    } finally {
+      setLoadingNative(false);
+    }
+  }
+
+  // Executa o teste de notificação.
   async function testarNotificacao() {
     if (testingNotification) return;
 
@@ -127,6 +208,7 @@ export default function PerfilScreen() {
     setMessage('');
 
     try {
+      const { enviarNotificacaoTeste } = await import('@/src/services/notificacoes');
       await enviarNotificacaoTeste();
       setMessage('Notificação de teste agendada!');
     } catch (error) {
@@ -141,6 +223,12 @@ export default function PerfilScreen() {
   }
 
   if (!user) return null;
+
+  const mensagemSucesso =
+    message.startsWith('Nome atualizado') ||
+    message.startsWith('Notificação de teste agendada') ||
+    message.startsWith('Autenticação biométrica ativada') ||
+    message.startsWith('Autenticação biométrica desativada');
 
   return (
     <ScrollView
@@ -259,25 +347,6 @@ export default function PerfilScreen() {
               {profile?.role ?? 'Não disponível'}
             </Text>
 
-            {message ? (
-              <Text
-                style={[
-                  styles.message,
-                  {
-                    fontSize: tamanhoFonte,
-                    color:
-                      message.startsWith('Nome atualizado') ||
-                      message.startsWith('Notificação de teste agendada')
-                        ? cores.titulo
-                        : cores.erro,
-                  },
-                ]}
-                accessibilityRole="alert"
-              >
-                {message}
-              </Text>
-            ) : null}
-
             <Pressable
               style={[
                 styles.saveButton,
@@ -323,6 +392,52 @@ export default function PerfilScreen() {
             </Pressable>
           </>
         )}
+
+        <Pressable
+          style={[
+            styles.saveButton,
+            { backgroundColor: cores.botao },
+            (loadingNative || loading) && styles.disabled,
+          ]}
+          onPress={() => void alterarBiometria()}
+          disabled={loadingNative || loading}
+          accessibilityRole="button"
+          accessibilityLabel={
+            nativeEnabled
+              ? 'Desativar autenticação biométrica'
+              : 'Ativar autenticação biométrica'
+          }
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              { fontSize: tamanhoFonte },
+            ]}
+          >
+            {loadingNative
+              ? 'Aguarde...'
+              : nativeEnabled
+                ? 'Desativar biometria'
+                : 'Ativar biometria'}
+          </Text>
+        </Pressable>
+
+        {message ? (
+          <Text
+            style={[
+              styles.message,
+              {
+                fontSize: tamanhoFonte,
+                color: mensagemSucesso
+                  ? cores.titulo
+                  : cores.erro,
+              },
+            ]}
+            accessibilityRole="alert"
+          >
+            {message}
+          </Text>
+        ) : null}
 
         <Pressable
           style={[
