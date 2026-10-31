@@ -42,14 +42,13 @@ export default function CadastroProdutoScreen() {
   const [sucesso, setSucesso] = useState('');
   const [produtoEditando, setProdutoEditando] = useState<string | null>(null);
 
-  // P2 - Preferências globais de acessibilidade
   const {
     tema,
     tamanhoFonte,
+    somAtivado,
     pronto: preferenciasProntas,
   } = useAccessibility();
 
-  // P1 - Carrega produtos locais e sincroniza com a API
   useEffect(() => {
     carregarProdutos();
   }, []);
@@ -173,9 +172,11 @@ export default function CadastroProdutoScreen() {
       limparFormulario();
       setSucesso('Produto cadastrado com sucesso!');
 
-      reproduzirSomCadastro().catch((error) => {
-        console.warn('Não foi possível reproduzir o áudio:', error);
-      });
+      if (somAtivado) {
+        reproduzirSomCadastro().catch((error) => {
+          console.warn('Não foi possível reproduzir o áudio:', error);
+        });
+      }
       
     } catch (error) {
       setErro('Não foi possível cadastrar o produto no servidor.');
@@ -295,7 +296,6 @@ export default function CadastroProdutoScreen() {
     setEndereco(null);
   }
 
-  // P2 - Cores dinâmicas para os temas
   const escuro = tema === 'escuro';
 
   const cores = {
@@ -315,7 +315,6 @@ export default function CadastroProdutoScreen() {
 
   const fonteAjustada = tamanhoFonte;
 
-  // Aguarda o carregamento das preferências
   if (!preferenciasProntas) {
     return (
       <View

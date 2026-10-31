@@ -49,7 +49,6 @@ export default function PerfilScreen() {
     erro: escuro ? '#ff9aa9' : '#b00020',
   };
 
-  // Carrega a preferência biométrica da conta conectada.
   useEffect(() => {
     let cancelled = false;
 
@@ -94,7 +93,6 @@ export default function PerfilScreen() {
     };
   }, [user?.id]);
 
-  // Carrega os dados do perfil no Supabase.
   const loadProfile = useCallback(async () => {
     if (!user) {
       setProfile(null);
@@ -128,7 +126,6 @@ export default function PerfilScreen() {
     void loadProfile();
   }, [loadProfile]);
 
-  // Atualiza o nome do usuário.
   async function saveName() {
     if (!user || !profile || saving) return;
 
@@ -169,7 +166,6 @@ export default function PerfilScreen() {
     }
   }
 
-  // Ativa ou desativa a autenticação biométrica.
   async function alterarBiometria() {
     if (!user || loadingNative) return;
 
@@ -199,7 +195,6 @@ export default function PerfilScreen() {
     }
   }
 
-  // Executa o teste de notificação.
   async function testarNotificacao() {
     if (testingNotification) return;
 
@@ -208,9 +203,20 @@ export default function PerfilScreen() {
     setMessage('');
 
     try {
-      const { enviarNotificacaoTeste } = await import('@/src/services/notificacoes');
+      const {
+        enviarNotificacaoTeste,
+        obterExpoPushToken,
+      } = await import('@/src/services/notificacoes');
+
       await enviarNotificacaoTeste();
-      setMessage('Notificação de teste agendada!');
+
+      const token = await obterExpoPushToken();
+
+      if (token) {
+        setMessage('Notificação local enviada! Expo Push Token obtido com sucesso.');
+      } else {
+        setMessage('Notificação local enviada, mas não foi possível obter o Expo Push Token.');
+      }
     } catch (error) {
       setMessage(
         error instanceof Error

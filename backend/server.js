@@ -11,6 +11,9 @@ dns.setServers([
 ]);
 
 const Produto = require('./models/Produto');
+const verificarAutenticacao = require('./middleware/autenticacao');
+const PushToken = require('./models/PushToken');
+const { notificarNovoProduto } = require('./services/notificacoesPush');
 
 const app = express();
 
@@ -19,7 +22,6 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// Conexão com o MongoDB Atlas
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
@@ -32,14 +34,12 @@ mongoose
     );
   });
 
-// Rota inicial para testar a API
 app.get('/', (req, res) => {
   res.json({
     mensagem: 'API Menor Preço Saqua funcionando!',
   });
 });
 
-// LISTAR todos os produtos
 app.get('/produtos', async (req, res) => {
   try {
     const produtos = await Produto.find().sort({
@@ -57,8 +57,7 @@ app.get('/produtos', async (req, res) => {
 }
 });
 
-// CADASTRAR produto
-app.post('/produtos', async (req, res) => {
+app.post('/produtos', verificarAutenticacao, async (req, res) => {
   try {
     const { nome, preco, endereco } = req.body;
 
@@ -76,6 +75,8 @@ app.post('/produtos', async (req, res) => {
     });
 
     res.status(201).json(produto);
+
+    void notificarNovoProduto(produto, req.usuario.id);
   } catch (erro) {
     res.status(500).json({
       mensagem: 'Erro ao cadastrar produto.',
@@ -83,8 +84,7 @@ app.post('/produtos', async (req, res) => {
   }
 });
 
-// EDITAR produto
-app.put('/produtos/:id', async (req, res) => {
+app.put('/produtos/:id', verificarAutenticacao, async (req, res) => {
   try {
     const { nome, preco, endereco } = req.body;
 
@@ -115,8 +115,7 @@ app.put('/produtos/:id', async (req, res) => {
   }
 });
 
-// EXCLUIR produto
-app.delete('/produtos/:id', async (req, res) => {
+app.delete('/produtos/:id', verificarAutenticacao, async (req, res) => {
   try {
     const produto = await Produto.findByIdAndDelete(
       req.params.id
@@ -138,7 +137,48 @@ app.delete('/produtos/:id', async (req, res) => {
   }
 });
 
-// Inicia o servidor
+
+app.post('/notificacoes/token', verificarAutenticacao, async (req, res) => {
+  try {
+    const { token, plataforma } = req.body;
+
+    if (
+      typeof token !== 'string' ||
+      !/^ExponentPushToken\[[^\]]+\]$|^ExpoPushToken\[[^\]]+\]$/.test(token) ||
+      !['android', 'ios'].includes(plataforma)
+    ) {
+      return res.status(400).json({
+        mensagem: 'Token Push ou plataforma inválidos.',
+      });
+    }
+
+    await PushToken.findOneAndUpdate(
+      { token },
+      {
+        $set: {
+          usuarioId: req.usuario.id,
+          plataforma,
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    res.json({
+      mensagem: 'Token de notificação registrado com sucesso!',
+    });
+  } catch (erro) {
+    console.error('Erro ao registrar token Push:', erro);
+
+    res.status(500).json({
+      mensagem: 'Erro ao registrar token de notificação.',
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });

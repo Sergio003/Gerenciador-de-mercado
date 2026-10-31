@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 import { AppState, Platform, View } from 'react-native';
 
+import { registrarTokenPush } from '../services/notificacoes';
 import { supabase } from '../services/supabase';
 
 type SessionContextType = {
@@ -193,6 +194,11 @@ export function SessionProvider({
         lastSentActivity.current = 0;
         active.current = true;
         setUser(data.user);
+
+        void registrarTokenPush().catch((erro) => {
+          console.warn('Não foi possível registrar notificações push:', erro);
+        });
+        
       } catch (error) {
         const message =
           error instanceof Error
