@@ -18,6 +18,10 @@ const pushTokenSchema = new mongoose.Schema(
       enum: ['android', 'ios'],
       required: true,
     },
+    somAtivado: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,

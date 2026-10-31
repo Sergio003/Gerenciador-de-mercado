@@ -1,23 +1,29 @@
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+
+const CHAVE_SOM = 'menorpreco-som-confirmacao';
+
+async function verificarSomAtivado(): Promise<boolean> {
+  return (await AsyncStorage.getItem(CHAVE_SOM)) !== 'false';
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
     shouldShowList: true,
-    shouldPlaySound: true,
+    shouldPlaySound: await verificarSomAtivado(),
     shouldSetBadge: false,
   }),
 });
 
-export async function prepararNotificacoes() {
+export async function prepararNotificacoes(): Promise<boolean> {
   if (Platform.OS === 'web') {
     return false;
   }
 
   const permissaoAtual = await Notifications.getPermissionsAsync();
-
   let status = permissaoAtual.status;
 
   if (status !== 'granted') {
@@ -30,16 +36,23 @@ export async function prepararNotificacoes() {
   }
 
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('geral', {
-      name: 'Notificações gerais',
+    await Notifications.setNotificationChannelAsync('geral-com-som', {
+      name: 'Notificações com som',
       importance: Notifications.AndroidImportance.DEFAULT,
+      sound: 'default',
+    });
+
+    await Notifications.setNotificationChannelAsync('geral-silencioso', {
+      name: 'Notificações silenciosas',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      sound: null,
     });
   }
 
   return true;
 }
 
-export async function enviarNotificacaoTeste() {
+export async function enviarNotificacaoTeste(): Promise<void> {
   if (Platform.OS === 'web') {
     throw new Error('Teste disponível apenas no aplicativo nativo');
   }
@@ -50,6 +63,8 @@ export async function enviarNotificacaoTeste() {
     throw new Error('Permissão de notificações não concedida');
   }
 
+  const somAtivado = await verificarSomAtivado();
+
   await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Menor Preço Saqua',
@@ -58,7 +73,16 @@ export async function enviarNotificacaoTeste() {
         tipo: 'teste',
       },
     },
-    trigger: null,
+    trigger:
+      Platform.OS === 'android'
+        ? {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: 1,
+            channelId: somAtivado
+              ? 'geral-com-som'
+              : 'geral-silencioso',
+          }
+        : null,
   });
 }
 
@@ -95,7 +119,6 @@ export async function obterExpoPushToken(): Promise<string | null> {
   }
 }
 
-
 export async function registrarTokenPush(): Promise<boolean> {
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
     return false;
@@ -112,7 +135,9 @@ export async function registrarTokenPush(): Promise<boolean> {
   const { data, error } = await supabase.auth.getSession();
 
   if (error || !data.session?.access_token) {
-    console.warn('Não há sessão autenticada para registrar o token Push.');
+    console.warn(
+      'Não há sessão autenticada para registrar o token Push.'
+    );
     return false;
   }
 
@@ -128,18 +153,26 @@ export async function registrarTokenPush(): Promise<boolean> {
         body: JSON.stringify({
           token,
           plataforma: Platform.OS,
+          somAtivado:
+            (await AsyncStorage.getItem('menorpreco-som-confirmacao')) !== 'false',
         }),
       }
     );
 
     if (!resposta.ok) {
-      console.error('Erro HTTP ao registrar token Push:', resposta.status);
+      console.error(
+        'Erro HTTP ao registrar token Push:',
+        resposta.status
+      );
       return false;
     }
 
     return true;
   } catch (erro) {
-    console.error('Erro de conexão ao registrar token Push:', erro);
+    console.error(
+      'Erro de conexão ao registrar token Push:',
+      erro
+    );
     return false;
   }
 }

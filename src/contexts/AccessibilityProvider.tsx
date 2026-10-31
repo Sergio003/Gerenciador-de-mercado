@@ -60,6 +60,7 @@ export function AccessibilityProvider({
   const [somAtivado, setSomAtivado] = useState(true);
   const [pronto, setPronto] = useState(false);
 
+  // Carregar preferências salvas
   useEffect(() => {
     let ativo = true;
 
@@ -112,15 +113,22 @@ export function AccessibilityProvider({
     };
   }, []);
 
+  // Salvar preferências sempre que forem alteradas
   useEffect(() => {
     if (!pronto) return;
 
     async function persistirPreferencias() {
       try {
         await Promise.all([
-          salvarPreferencia(CHAVE_FONTE, String(tamanhoFonte)),
+          salvarPreferencia(
+            CHAVE_FONTE,
+            String(tamanhoFonte)
+          ),
           salvarPreferencia(CHAVE_TEMA, tema),
-          salvarPreferencia(CHAVE_SOM, String(somAtivado)),
+          salvarPreferencia(
+            CHAVE_SOM,
+            String(somAtivado)
+          ),
         ]);
       } catch (erro) {
         console.error(
@@ -130,23 +138,54 @@ export function AccessibilityProvider({
       }
     }
 
-    persistirPreferencias();
+    void persistirPreferencias();
   }, [tamanhoFonte, tema, somAtivado, pronto]);
 
   function aumentarFonte() {
-    setTamanhoFonte((atual) => Math.min(atual + 2, 26));
+    setTamanhoFonte((atual) =>
+      Math.min(atual + 2, 26)
+    );
   }
 
   function diminuirFonte() {
-    setTamanhoFonte((atual) => Math.max(atual - 2, 14));
+    setTamanhoFonte((atual) =>
+      Math.max(atual - 2, 14)
+    );
   }
 
   function alterarTema(novoTema: Tema) {
     setTema(novoTema);
   }
 
+  // Alterar som e atualizar preferência no servidor
   function alterarSom(ativado: boolean) {
     setSomAtivado(ativado);
+
+    void (async () => {
+      try {
+        // Salva a nova preferência primeiro
+        await salvarPreferencia(
+          CHAVE_SOM,
+          String(ativado)
+        );
+
+        // Atualiza o registro Push no backend
+        if (
+          Platform.OS === 'android' ||
+          Platform.OS === 'ios'
+        ) {
+          const { registrarTokenPush } =
+            await import('../services/notificacoes');
+
+          await registrarTokenPush();
+        }
+      } catch (erro) {
+        console.error(
+          'Erro ao atualizar preferência de som:',
+          erro
+        );
+      }
+    })();
   }
 
   return (

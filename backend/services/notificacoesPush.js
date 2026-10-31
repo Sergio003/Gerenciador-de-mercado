@@ -6,22 +6,35 @@ async function notificarNovoProduto(produto, usuarioId) {
     // Não notifica o usuário que cadastrou o produto.
     const dispositivos = await PushToken.find({
       usuarioId: { $ne: usuarioId },
-    }).select('token');
+    }).select('token plataforma somAtivado');
 
     if (dispositivos.length === 0) {
       return;
     }
 
-    const mensagens = dispositivos.map((dispositivo) => ({
-      to: dispositivo.token,
-      sound: 'default',
-      title: 'Novo produto no Menor Preço Saqua!',
-      body: `${produto.nome} foi cadastrado por R$ ${produto.preco}.`,
-      data: {
-        tipo: 'novo_produto',
-        produtoId: String(produto._id),
-      },
-    }));
+    const mensagens = dispositivos.map((dispositivo) => {
+      const somAtivado = dispositivo.somAtivado !== false;
+
+      const mensagem = {
+        to: dispositivo.token,
+        title: 'Novo produto no Menor Preço Saqua!',
+        body: `${produto.nome} foi cadastrado por R$ ${produto.preco}.`,
+        data: {
+          tipo: 'novo_produto',
+          produtoId: String(produto._id),
+        },
+      };
+
+      if (dispositivo.plataforma === 'android') {
+        mensagem.channelId = somAtivado
+          ? 'geral-com-som'
+          : 'geral-silencioso';
+      } else {
+        mensagem.sound = somAtivado ? 'default' : null;
+      }
+
+      return mensagem;
+    });
 
     // A API do Expo aceita até 100 notificações por requisição.
     for (let i = 0; i < mensagens.length; i += 100) {
