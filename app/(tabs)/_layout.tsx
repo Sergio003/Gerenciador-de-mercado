@@ -106,6 +106,20 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Chat',
+          tabBarAccessibilityLabel: 'Aba de mensagens',
+          tabBarIcon: ({ color }) => (
+            <Ionicons
+              name="chatbubbles-outline"
+              size={24}
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

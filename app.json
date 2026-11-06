@@ -3,7 +3,7 @@
   "expo": {
     "name": "Menor Preço Saqua",
     "slug": "menorpreco-saqua",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "menorprecosaqua",

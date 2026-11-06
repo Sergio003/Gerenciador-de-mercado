@@ -43,6 +43,13 @@ function AppNavigator() {
           name="(tabs)"
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="chat/[roomId]"
+          options={{
+            headerShown: true,
+            title: 'Conversa',
+          }}
+        />
 
         <Stack.Screen
           name="modal"
