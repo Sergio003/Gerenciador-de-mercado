@@ -61,35 +61,120 @@ app.get('/produtos', async (req, res) => {
   }
 });
 
-// Cadastrar produto
+ // Cadastrar produto com proteção para sincronização offline
 app.post('/produtos', verificarAutenticacao, async (req, res) => {
   try {
-    const { nome, preco, endereco } = req.body;
+    const { nome, preco, endereco, operacaoId } = req.body;
+    const usuarioId = req.usuario.id;
 
-    if (!nome || !preco || !endereco) {
+    if (
+      typeof nome !== 'string' || !nome.trim() ||
+      typeof preco !== 'string' || !preco.trim() ||
+      typeof endereco !== 'string' || !endereco.trim()
+    ) {
       return res.status(400).json({
         mensagem: 'Nome, preço e endereço são obrigatórios.',
       });
     }
 
-    const produto = await Produto.create({
-      nome,
-      preco,
-      endereco,
-    });
+    if (
+      operacaoId !== undefined &&
+      (
+        typeof operacaoId !== 'string' ||
+        !/^[a-zA-Z0-9_-]{8,100}$/.test(operacaoId)
+      )
+    ) {
+      return res.status(400).json({
+        mensagem: 'Identificador de operação inválido.',
+      });
+    }
+
+    const dados = {
+      nome: nome.trim(),
+      preco: preco.trim(),
+      endereco: endereco.trim(),
+      usuarioId,
+    };
+
+    const verificarRepeticao = (existente) => {
+      if (existente.usuarioId !== usuarioId) {
+        return res.status(409).json({
+          mensagem: 'Identificador já utilizado por outro usuário.',
+        });
+      }
+
+      if (
+        existente.nome !== dados.nome ||
+        existente.preco !== dados.preco ||
+        existente.endereco !== dados.endereco
+      ) {
+        return res.status(409).json({
+          mensagem: 'Operação já registrada com dados diferentes.',
+        });
+      }
+
+      return res.status(200).json(existente);
+    };
+
+    if (operacaoId) {
+      const existente = await Produto.findOne({ operacaoId });
+
+      if (existente) {
+        return verificarRepeticao(existente);
+      }
+
+      dados.operacaoId = operacaoId;
+    }
+
+    const produto = await Produto.create(dados);
 
     res.status(201).json(produto);
 
-    // Notifica outros usuários sobre o novo produto
-    void notificarNovoProduto(produto, req.usuario.id);
+    // Notificar apenas quando um produto novo for criado
+    void notificarNovoProduto(produto, usuarioId);
+
   } catch (erro) {
+    if (erro.code === 11000 && req.body.operacaoId) {
+      try {
+        const existente = await Produto.findOne({
+          operacaoId: req.body.operacaoId,
+        });
+
+        if (existente) {
+          if (existente.usuarioId !== req.usuario.id) {
+            return res.status(409).json({
+              mensagem: 'Identificador já utilizado por outro usuário.',
+            });
+          }
+
+          const { nome, preco, endereco } = req.body;
+
+          if (
+            existente.nome !== nome.trim() ||
+            existente.preco !== preco.trim() ||
+            existente.endereco !== endereco.trim()
+          ) {
+            return res.status(409).json({
+              mensagem: 'Operação já registrada com dados diferentes.',
+            });
+          }
+
+          return res.status(200).json(existente);
+        }
+      } catch (erroConsulta) {
+        console.error('Erro ao consultar operação:', erroConsulta);
+      }
+    }
+
     console.error('Erro ao cadastrar produto:', erro);
 
-    res.status(500).json({
+    return res.status(500).json({
       mensagem: 'Erro ao cadastrar produto.',
     });
   }
 });
+
+
 
 // Atualizar produto
 app.put('/produtos/:id', verificarAutenticacao, async (req, res) => {

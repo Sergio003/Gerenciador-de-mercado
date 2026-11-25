@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const produtoSchema = new mongoose.Schema(
@@ -19,9 +20,35 @@ const produtoSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+
+    // Identificador único para sincronização offline
+    operacaoId: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+
+    usuarioId: {
+      type: String,
+      trim: true,
+      default: undefined,
+    },
+
   },
   {
     timestamps: true,
+  }
+);
+
+// Impede duplicações de operações sincronizadas.
+// O índice parcial ignora produtos antigos sem operacaoId.
+produtoSchema.index(
+  { operacaoId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      operacaoId: { $type: 'string' },
+    },
   }
 );
 
