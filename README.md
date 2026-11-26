@@ -20,7 +20,7 @@ Aplicativo híbrido da disciplina **Laboratório de Desenvolvimento de Aplicativ
 
 [Aplicação web](https://gerenciador-de-mercado.vercel.app)
 
-[APK Android atualizado (Expo EAS)](https://expo.dev/accounts/leovelloso/projects/menorpreco-saqua/builds/42973e11-e350-4281-975c-a83ec4b2655b)
+[APK Android atualizado (Expo EAS)](https://expo.dev/accounts/leovelloso/projects/menorpreco-saqua/builds/b2066ac0-3e3b-49fe-9017-4402e6cf8bdc)
 
 [Repositório GitHub](https://github.com/Sergio003/Gerenciador-de-mercado)
 
@@ -37,6 +37,7 @@ Aplicativo híbrido da disciplina **Laboratório de Desenvolvimento de Aplicativ
 - [P1 — Hospedagem e banco de dados](#p1--hospedagem-do-projeto-e-banco-de-dados-em-nuvem)
 - [P2 — Acessibilidade, autenticação, notificações e chat](#p2--aula-12-chat-em-tempo-real-entre-usuários)
 - [P2 — Aula 13: Autenticação e Autorização](#p2--aula-13-autenticação-e-autorização)
+- [P2 — Entrega final](#p2--entrega-final)
 - [Integrantes](#integrantes)
 
 ---
@@ -431,15 +432,15 @@ Os testes de cadastro, consulta, edição e exclusão foram realizados com suces
 
 ## Aplicação publicada no Vercel
 
-![Aplicação publicada no Vercel](docs/imagens/aula7(P1)/p1-vercel.png)
+![Aplicação publicada no Vercel](docs/imagens/aula7%28P1%29/p1-vercel.png)
 
 ## Backend publicado no Render
 
-![Backend funcionando no Render](docs/imagens/aula7(P1)/p1-render.png)
+![Backend funcionando no Render](docs/imagens/aula7%28P1%29/p1-render.png)
 
 ## Produtos armazenados no MongoDB Atlas
 
-![Produtos armazenados no MongoDB Atlas](docs/imagens/aula7(P1)/p1-mongodb.png)
+![Produtos armazenados no MongoDB Atlas](docs/imagens/aula7%28P1%29/p1-mongodb.png)
 
 ---
 
@@ -1606,3 +1607,232 @@ A verificação de TypeScript foi executada com o comando:
 Os seis scripts de segurança foram executados e aprovados. Os resultados demonstraram o isolamento de perfis, a proteção contra alterações indevidas de permissões, a restrição de acesso às mensagens e o bloqueio de leitura após o encerramento da sessão da aplicação.
 
 A documentação e as evidências foram organizadas para integrar a entrega da Aula 13.
+
+---
+
+## P2 — Entrega final
+
+### Objetivo
+
+Consolidar as funcionalidades das aulas anteriores e atender aos cenários da avaliação prática integradora de 2026.2, com aplicativo Android instalável, backend em nuvem, operação offline e controle de permissões.
+
+### Alterações finais
+
+- Cadastro offline com fila persistente por usuário (AsyncStorage), indicação de pendências e sincronização ao restabelecer a conexão na tela de produtos.
+- Identificador único `operacaoId` para evitar duplicação em reenvios; o backend retorna o registro existente quando a operação é repetida com os mesmos dados e usuário.
+- Cache de produtos e consultas ViaCEP anteriores para uso sem conexão.
+- Perfis distintos: administrador e aluno; edição e exclusão de produtos restritas ao administrador no backend.
+- Proteção da coluna `role` no Supabase; o usuário autenticado pode atualizar apenas o nome, respeitando as políticas RLS.
+- Revisão da sessão por inatividade e saída do primeiro plano, biometria, notificações, acessibilidade e teclado Android nas telas de login, produtos, perfil e chat.
+
+### Arquitetura atual
+
+```text
+Aplicativo Expo / React Native (Android e Web)
+  |-- AsyncStorage: cache, fila offline e preferências
+  |-- Supabase Auth / PostgreSQL / Realtime: sessão, perfis e chat
+  |-- ViaCEP: consulta de endereço
+  `-- API REST (Node.js / Express, Render)
+        |-- MongoDB Atlas: produtos e tokens push
+        `-- Expo Push Notifications: avisos de novos produtos
+```
+
+### Instalação e execução da versão final
+
+Pré-requisitos: Node.js (testado com 24.21.0), npm, Git e serviços de nuvem configurados. Dependências principais: Expo SDK 54, React Native 0.81.5, TypeScript, Expo Router, Supabase JS, AsyncStorage, NetInfo, Expo Crypto, Expo Local Authentication, Expo Notifications, Expo Audio, React Native Keyboard Controller, Express e Mongoose. As versões completas estão nos arquivos `package.json` da raiz e do backend.
+
+```bash
+git clone https://github.com/Sergio003/Gerenciador-de-mercado.git
+cd Gerenciador-de-mercado
+npm ci
+```
+
+Arquivo `.env` na raiz (exemplos, sem segredos):
+
+```dotenv
+EXPO_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=SUA_CHAVE_PUBLICAVEL
+```
+
+```bash
+npx expo start
+```
+
+Para executar o backend localmente, em outro terminal, a partir da raiz:
+
+```bash
+cd backend
+npm ci
+node server.js
+```
+
+Configure antes o arquivo `backend/.env`:
+
+```dotenv
+MONGODB_URI=SUA_URI_PRIVADA
+SUPABASE_URL=https://SEU-PROJETO.supabase.co
+SUPABASE_ANON_KEY=SUA_CHAVE_PUBLICAVEL
+```
+
+O aplicativo utiliza a API publicada por padrão; para apontar ao backend local, ajuste a URL em `src/services/produtosApi.ts` para um endereço acessível ao dispositivo. Um Supabase novo exige criação das tabelas, funções de sessão, políticas RLS e configuração do Realtime. O SQL `backend/sql/01_permissoes_perfis_p2.sql` complementa as políticas existentes; não é uma migração completa do banco. Para gerar outro APK, configure também o ambiente EAS e o Firebase para notificações Android, conforme a configuração do projeto. Não publique senhas, tokens ou arquivos `.env`.
+
+### Perfis de teste e permissões
+
+| Operação | Sem autenticação | Aluno B | Aluno A (admin) |
+|---|---|---|---|
+| GET /produtos | Permitida | Permitida | Permitida |
+| POST /produtos | Bloqueada | Permitida | Permitida |
+| PUT /produtos/:id | Bloqueada | Bloqueada | Permitida |
+| DELETE /produtos/:id | Bloqueada | Bloqueada | Permitida |
+
+As contas de demonstração são Aluno A (admin) e Aluno B (aluno). As credenciais são fornecidas reservadamente durante a avaliação. A atribuição do papel administrativo é realizada por responsável autorizado no Supabase.
+
+### Roteiro de validação da P2
+
+| Cenário | Procedimento | Resultado esperado |
+|---|---|---|
+| A — Fluxo completo | Entrar com A, cadastrar produto, consultar com B e verificar no banco | Registro disponível e persistido |
+| B — Segurança | Tentar editar/excluir sem token e com perfil aluno; consultar perfil após encerrar sessão | HTTP 401, HTTP 403 e bloqueio RLS, respectivamente |
+| C — Recurso nativo | Ativar biometria, entrar novamente, cancelar e repetir confirmando | Cancelamento bloqueia entrada; confirmação permite continuar |
+| D — Falha de rede | Com sessão ativa, desligar rede, cadastrar produto, reconectar na tela de produtos | Pendência sincronizada sem duplicação |
+| E — Resiliência | Informar dados inválidos, simular falha de serviço ou aguardar expiração | Feedback adequado sem encerramento inesperado |
+
+### Testes finais — 26/11/2026
+
+| Teste | Local | Render |
+|---|---|---|
+| Perfil administrador | Aprovado | Aprovado |
+| Perfil aluno | Aprovado | Aprovado |
+| Cadastro pelo aluno | 201 | 201 |
+| Reenvio da mesma operação | 200, mesmo ID | 200, mesmo ID |
+| Edição pelo aluno | 403 | 403 |
+| Exclusão pelo aluno | 403 | 403 |
+| Edição pelo administrador | 200 | 200 |
+| Exclusão pelo administrador | 200 | 200 |
+| Escrita na coluna role | Bloqueada (42501) | Bloqueada (42501) |
+| **Total** | **9/9** | **9/9** |
+
+A API respondeu HTTP 200 e as tentativas de edição e exclusão sem token retornaram HTTP 401 nos dois ambientes. `npx tsc --noEmit` terminou com código de saída 0. O script `backend/teste_permissoes.cjs` reproduz os testes locais com contas de demonstração; ele cria e exclui um produto temporário e pode disparar uma notificação push. Não compartilhe a saída do terminal contendo senhas digitadas.
+
+### Evidências visuais da entrega final
+
+As imagens abaixo são as capturas salvas durante a validação final, complementando os registros históricos das aulas anteriores.
+
+#### API e publicação
+
+**Deploy render**
+
+![Deploy render](evidencias_p2/01_api_backend/05_deploy_render.png)
+
+**Deploy final render**
+
+![Deploy final render](evidencias_p2/01_api_backend/06_deploy_final_render.png)
+
+#### Autenticação e perfis
+
+**Sessao expirada por inatividade**
+
+![Sessao expirada por inatividade](evidencias_p2/02_autenticacao_e_perfis/01_sessao_expirada_por_inatividade.jpg)
+
+**Sessao encerrada segundo plano**
+
+![Sessao encerrada segundo plano](evidencias_p2/02_autenticacao_e_perfis/02_sessao_encerrada_segundo_plano.jpg)
+
+**Perfil administrador**
+
+![Perfil administrador](evidencias_p2/02_autenticacao_e_perfis/03_perfil_administrador.jpg)
+
+**Perfil aluno**
+
+![Perfil aluno](evidencias_p2/02_autenticacao_e_perfis/04_perfil_aluno.jpg)
+
+#### Biometria
+
+**Biometria ativada**
+
+![Biometria ativada](evidencias_p2/03_biometria/01_biometria_ativada.jpg)
+
+**Autenticacao biometrica login**
+
+![Autenticacao biometrica login](evidencias_p2/03_biometria/02_autenticacao_biometrica_login.jpg)
+
+**Acesso apos biometria**
+
+![Acesso apos biometria](evidencias_p2/03_biometria/03_acesso_apos_biometria.jpg)
+
+#### Operação offline e sincronização
+
+**Cadastro sem internet**
+
+![Cadastro sem internet](evidencias_p2/04_offline_e_sincronizacao/01_cadastro_sem_internet.jpg)
+
+**Sincronizacao automatica**
+
+![Sincronizacao automatica](evidencias_p2/04_offline_e_sincronizacao/02_sincronizacao_automatica.jpg)
+
+#### Interação entre usuários
+
+**Envio mensagem**
+
+![Envio mensagem](evidencias_p2/05_interacao_entre_usuarios/01_envio_mensagem.jpeg)
+
+**Recebimento mensagem**
+
+![Recebimento mensagem](evidencias_p2/05_interacao_entre_usuarios/02_recebimento_mensagem.jpeg)
+
+#### Notificações
+
+**Notificacao local**
+
+![Notificacao local](evidencias_p2/06_notificacoes/01_notificacao_local.jpg)
+
+**Notificacao push remota**
+
+![Notificacao push remota](evidencias_p2/06_notificacoes/02_notificacao_push_remota.jpeg)
+
+#### Acessibilidade
+
+**Tema escuro**
+
+![Tema escuro](evidencias_p2/07_acessibilidade/01_tema_escuro.jpg)
+
+**Fonte ampliada**
+
+![Fonte ampliada](evidencias_p2/07_acessibilidade/02_fonte_ampliada.jpg)
+
+**Produtos tema escuro**
+
+![Produtos tema escuro](evidencias_p2/07_acessibilidade/03_produtos_tema_escuro.jpg)
+
+**Som desativado**
+
+![Som desativado](evidencias_p2/07_acessibilidade/04_som_desativado.jpg)
+
+**Som ativado**
+
+![Som ativado](evidencias_p2/07_acessibilidade/05_som_ativado.jpg)
+
+**Tema claro**
+
+![Tema claro](evidencias_p2/07_acessibilidade/06_tema_claro.jpg)
+
+**Produtos tema claro**
+
+![Produtos tema claro](evidencias_p2/07_acessibilidade/07_produtos_tema_claro.jpg)
+
+**Persistencia configuracoes**
+
+![Persistencia configuracoes](evidencias_p2/07_acessibilidade/08_persistencia_configuracoes.jpeg)
+
+### Publicação e limitações
+
+- [APK Android final](https://expo.dev/accounts/leovelloso/projects/menorpreco-saqua/builds/b2066ac0-3e3b-49fe-9017-4402e6cf8bdc).
+- [API publicada no Render](https://menor-preco-saqua-api-8b8q.onrender.com/).
+- Commit `ffd3d66`: proteção contra duplicação na sincronização offline.
+- Commit `6b40430`: finalização dos requisitos da P2 e controle de permissões.
+- As 37 evidências originais permanecem no pacote acadêmico separado.
+- Os botões de edição e exclusão podem continuar visíveis para o aluno, mas o servidor bloqueia essas operações. A validação de JWT nas rotas gerais da API não equivale à verificação da sessão ativa da aplicação em todas as rotas.
+- A consulta ViaCEP offline depende de cache anterior; a sincronização foi validada na tela de produtos.
+- Não houve validação equivalente em iOS nem auditoria completa de segurança. A versão web histórica permanece referenciada; sua publicação final não foi revalidada nesta etapa.
+
+A entrega final preserva o histórico do desenvolvimento e registra os resultados efetivamente obtidos na avaliação técnica do aplicativo.
