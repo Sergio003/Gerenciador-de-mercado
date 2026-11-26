@@ -1,4 +1,3 @@
-
 import { useSession } from '@/src/contexts/SessionProvider';
 import { supabase } from '@/src/services/supabase';
 import { router } from 'expo-router';
@@ -71,6 +70,9 @@ export default function ChatScreen() {
         <Text style={styles.erro}>{erro}</Text>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator
+          contentContainerStyle={{ paddingBottom: 24 }}
           data={salas}
           keyExtractor={(item) => item.id}
           ListEmptyComponent={
@@ -111,6 +113,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    paddingTop: 40,
     backgroundColor: '#FFFFFF',
   },
   titulo: {

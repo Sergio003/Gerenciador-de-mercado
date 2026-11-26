@@ -1,14 +1,26 @@
+
 import { supabase } from './supabase';
 
 const API_URL =
   'https://menor-preco-saqua-api-8b8q.onrender.com';
 
-async function obterTokenAutenticacao(): Promise<string> {
+async function obterTokenAutenticacao(
+  usuarioIdEsperado?: string
+): Promise<string> {
   const { data, error } = await supabase.auth.getSession();
 
   if (error || !data.session?.access_token) {
     throw new Error(
       'Sua sessão expirou. Faça login novamente para continuar.'
+    );
+  }
+
+  if (
+    usuarioIdEsperado &&
+    data.session.user.id !== usuarioIdEsperado
+  ) {
+    throw new Error(
+      'A conta autenticada foi alterada.'
     );
   }
 
@@ -37,28 +49,46 @@ export async function listarProdutos(): Promise<ProdutoApi[]> {
 export async function cadastrarProduto(
   nome: string,
   preco: string,
-  endereco: string
+  endereco: string,
+  operacaoId?: string,
+  usuarioIdEsperado?: string
 ): Promise<ProdutoApi> {
-  const token = await obterTokenAutenticacao();
-  
-  const resposta = await fetch(`${API_URL}/produtos`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      nome,
-      preco,
-      endereco,
-    }),
-  });
+  const token = await obterTokenAutenticacao(
+    usuarioIdEsperado
+  );
 
-  if (!resposta.ok) {
-    throw new Error('Não foi possível cadastrar o produto.');
+  const controlador = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controlador.abort();
+  }, 30000);
+
+  try {
+    const resposta = await fetch(`${API_URL}/produtos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        nome,
+        preco,
+        endereco,
+        ...(operacaoId ? { operacaoId } : {}),
+      }),
+      signal: controlador.signal,
+    });
+
+    if (!resposta.ok) {
+      throw new Error(
+        `Não foi possível cadastrar o produto. HTTP ${resposta.status}`
+      );
+    }
+
+    return await resposta.json();
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return resposta.json();
 }
 
 export async function atualizarProduto(
@@ -68,14 +98,14 @@ export async function atualizarProduto(
   endereco: string
 ): Promise<ProdutoApi> {
   const token = await obterTokenAutenticacao();
-  
+
   const resposta = await fetch(
     `${API_URL}/produtos/${id}`,
     {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         nome,

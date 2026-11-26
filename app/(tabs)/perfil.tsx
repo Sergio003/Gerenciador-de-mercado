@@ -1,11 +1,10 @@
-
 import { useAccessibility } from '@/src/contexts/AccessibilityProvider';
 import { useSession } from '@/src/contexts/SessionProvider';
 import { supabase } from '@/src/services/supabase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useCallback, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +12,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+
+const FormScroll = Platform.OS === 'web' ? ScrollView : KeyboardAwareScrollView;
 
 type Profile = {
   id: string;
@@ -237,13 +239,16 @@ export default function PerfilScreen() {
     message.startsWith('Autenticação biométrica desativada');
 
   return (
-    <ScrollView
+    <FormScroll
       style={[
         styles.container,
         { backgroundColor: cores.fundo },
       ]}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="none"
+      {...(Platform.OS !== 'web' ? { bottomOffset: 24 } : {})}
+      showsVerticalScrollIndicator
     >
       <View
         style={[
@@ -469,7 +474,7 @@ export default function PerfilScreen() {
           </Text>
         </Pressable>
       </View>
-    </ScrollView>
+    </FormScroll>
   );
 }
 
@@ -480,8 +485,10 @@ const styles = StyleSheet.create({
 
   content: {
     padding: 20,
+    paddingTop: 40,
+    paddingBottom: 30,
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
 
   card: {

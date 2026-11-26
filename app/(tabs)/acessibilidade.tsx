@@ -1,4 +1,3 @@
-
 import { useAccessibility } from '@/src/contexts/AccessibilityProvider';
 import React from 'react';
 import {
@@ -33,8 +32,10 @@ export default function AcessibilidadeScreen() {
 
   return (
     <ScrollView
-      style={{ backgroundColor: cores.fundo }}
+      style={{ flex: 1, backgroundColor: cores.fundo }}
       contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator
+      keyboardShouldPersistTaps="handled"
     >
       {/* Título principal */}
       <Text
@@ -309,7 +310,9 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    justifyContent: 'center',
+    paddingTop: 40,
+    paddingBottom: 30,
+    justifyContent: 'flex-start',
   },
 
   titulo: {

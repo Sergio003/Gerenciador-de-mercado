@@ -13,6 +13,7 @@ dns.setServers([
 
 const Produto = require('./models/Produto');
 const verificarAutenticacao = require('./middleware/autenticacao');
+const { verificarAdministrador } = require('./middleware/autenticacao');
 const PushToken = require('./models/PushToken');
 const { notificarNovoProduto } = require('./services/notificacoesPush');
 
@@ -177,7 +178,7 @@ app.post('/produtos', verificarAutenticacao, async (req, res) => {
 
 
 // Atualizar produto
-app.put('/produtos/:id', verificarAutenticacao, async (req, res) => {
+app.put('/produtos/:id', verificarAutenticacao, verificarAdministrador, async (req, res) => {
   try {
     const { nome, preco, endereco } = req.body;
 
@@ -211,7 +212,7 @@ app.put('/produtos/:id', verificarAutenticacao, async (req, res) => {
 });
 
 // Excluir produto
-app.delete('/produtos/:id', verificarAutenticacao, async (req, res) => {
+app.delete('/produtos/:id', verificarAutenticacao, verificarAdministrador, async (req, res) => {
   try {
     const produto = await Produto.findByIdAndDelete(
       req.params.id

@@ -1,18 +1,20 @@
-
 import { useSession } from '@/src/contexts/SessionProvider';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+
+const FormScroll = Platform.OS === 'web' ? ScrollView : KeyboardAwareScrollView;
 
 export default function LoginScreen() {
   const { user, busy, reason, login } = useSession();
@@ -43,10 +45,15 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={styles.container}>
+      <FormScroll
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        {...(Platform.OS !== 'web' ? { bottomOffset: 24 } : {})}
+        showsVerticalScrollIndicator
+      >
       <View style={styles.card}>
         <Text style={styles.title}>Menor Preço Saqua</Text>
 
@@ -98,16 +105,22 @@ export default function LoginScreen() {
           )}
         </Pressable>
       </View>
-    </KeyboardAvoidingView>
+      </FormScroll>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f0f5f1',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#f0f5f1',
+    paddingTop: 40,
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: '#fff',

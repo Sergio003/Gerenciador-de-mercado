@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import * as Crypto from 'expo-crypto';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView as NativeKeyboardAvoidingView } from 'react-native-keyboard-controller';
+
+const KeyboardLayout = Platform.OS === 'web' ? View : NativeKeyboardAvoidingView;
 import { useAccessibility } from '../contexts/AccessibilityProvider';
+import { useSession } from '../contexts/SessionProvider';
 
 import ProdutoItem from '../components/ProdutoItem';
 
@@ -20,6 +18,14 @@ import {
   excluirProduto,
   listarProdutos,
 } from '../services/produtosApi';
+
+import {
+  adicionarProdutoPendente,
+  obterProdutosPendentes,
+  sincronizarProdutosPendentes,
+  type ProdutoPendente,
+} from '../services/sincronizacaoOffline';
+
 import { buscarCep, type Endereco } from '../services/viacep';
 
 type Produto = {
@@ -31,11 +37,36 @@ type Produto = {
 
 const CHAVE_STORAGE = 'menor-preco-saqua-produtos';
 
+async function verificarSemInternet(): Promise<boolean> {
+  const estado = await NetInfo.fetch();
+
+  return (
+    estado.isConnected === false ||
+    estado.isInternetReachable === false
+  );
+}
+
+function gerarOperacaoId(): string {
+  return Crypto.randomUUID();
+}
+
 export default function CadastroProdutoScreen() {
+  const { user } = useSession();
+  const geracaoCarregamento = useRef(0);
+  const listaRef = useRef<FlatList<Produto>>(null);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [conectado, setConectado] = useState(false);
+
+  const chaveStorageUsuario = user
+    ? `${CHAVE_STORAGE}:${user.id}`
+    : null;
+
   const [produto, setProduto] = useState('');
   const [preco, setPreco] = useState('');
   const [cep, setCep] = useState('');
   const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [produtosPendentes, setProdutosPendentes] = useState<ProdutoPendente[]>([]);
+  const quantidadePendentes = produtosPendentes.length;
   const [endereco, setEndereco] = useState<Endereco | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
@@ -50,27 +81,128 @@ export default function CadastroProdutoScreen() {
   } = useAccessibility();
 
   useEffect(() => {
-    carregarProdutos();
+    geracaoCarregamento.current += 1;
+    setProdutos([]);
+    setProdutosPendentes([]);
+    setSincronizando(false);
+    setCarregando(false);
+    limparFormulario();
+    setProdutoEditando(null);
+    setErro('');
+    setSucesso('');
+
+    if (user?.id) {
+      void carregarProdutos();
+      void carregarProdutosPendentes();
+    }
+
+    return () => {
+      geracaoCarregamento.current += 1;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    return NetInfo.addEventListener((estado) => {
+      setConectado(
+        estado.isConnected === true &&
+        estado.isInternetReachable !== false
+      );
+    });
   }, []);
 
-  async function carregarProdutos() {
+  useEffect(() => {
+    const usuarioId = user?.id;
+    if (!usuarioId || !conectado || carregando || quantidadePendentes === 0) {
+      return;
+    }
+
+    const geracao = geracaoCarregamento.current;
+    let ativo = true;
+    let executando = false;
+
+    async function sincronizar() {
+      if (!ativo || executando || !usuarioId ||
+          geracao !== geracaoCarregamento.current) return;
+      executando = true;
+      setSincronizando(true);
+      try {
+        const total = await sincronizarProdutosPendentes(usuarioId);
+        if (!ativo || geracao !== geracaoCarregamento.current) return;
+        if (total > 0) {
+          await carregarProdutos(geracao, false);
+          if (!ativo || geracao !== geracaoCarregamento.current) return;
+          setSucesso(`${total} produto(s) sincronizado(s) com sucesso!`);
+        }
+        await carregarProdutosPendentes(geracao);
+      } catch (error) {
+        if (ativo && geracao === geracaoCarregamento.current) {
+          setErro('Não foi possível sincronizar. Os produtos pendentes serão mantidos.');
+        }
+      } finally {
+        executando = false;
+        if (geracao === geracaoCarregamento.current) setSincronizando(false);
+      }
+    }
+
+    void sincronizar();
+    const intervalo = setInterval(() => { void sincronizar(); }, 15000);
+    return () => {
+      ativo = false;
+      clearInterval(intervalo);
+    };
+  }, [user?.id, conectado, carregando, quantidadePendentes]);
+
+  async function carregarProdutosPendentes(geracaoAtual = geracaoCarregamento.current) {
+  const usuarioId = user?.id;
+  if (geracaoAtual !== geracaoCarregamento.current) return;
+
+  if (!usuarioId) {
+    setProdutosPendentes([]);
+    return;
+  }
+
+  try {
+    const pendentes = await obterProdutosPendentes(usuarioId);
+
+    if (geracaoAtual !== geracaoCarregamento.current) {
+      return;
+    }
+
+    setProdutosPendentes(pendentes);
+  } catch (error) {
+    if (geracaoAtual === geracaoCarregamento.current) {
+      setErro('Não foi possível carregar os produtos pendentes.');
+    }
+  }
+}
+
+  async function carregarProdutos(geracaoAtual = geracaoCarregamento.current, mostrarLoading = true) {
+    if (geracaoAtual !== geracaoCarregamento.current) return;
+
     try {
-      setCarregando(true);
+      if (mostrarLoading) setCarregando(true);
       setErro('');
 
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        const dadosSalvos = localStorage.getItem(CHAVE_STORAGE);
+      const dadosSalvos = chaveStorageUsuario
+        ? await AsyncStorage.getItem(chaveStorageUsuario)
+        : null;
 
-        if (dadosSalvos) {
-          const listaLocal = JSON.parse(dadosSalvos);
+      if (dadosSalvos) {
+        const listaLocal = JSON.parse(dadosSalvos);
 
-          if (Array.isArray(listaLocal)) {
-            setProdutos(listaLocal);
-          }
+        if (
+          Array.isArray(listaLocal) &&
+          geracaoAtual === geracaoCarregamento.current
+        ) {
+          setProdutos(listaLocal);
         }
       }
 
       const dadosApi = await listarProdutos();
+
+      if (geracaoAtual !== geracaoCarregamento.current) {
+        return;
+      }
 
       const listaApi: Produto[] = dadosApi.map((item) => ({
         id: item._id,
@@ -79,29 +211,58 @@ export default function CadastroProdutoScreen() {
         endereco: item.endereco,
       }));
 
-      salvarLocalmente(listaApi);
+      if (geracaoAtual !== geracaoCarregamento.current) {
+        return;
+      }
+
+      await salvarLocalmente(listaApi, geracaoAtual);
+
     } catch (error) {
-      setErro(
-        'Não foi possível carregar os produtos do servidor. Os dados locais serão mantidos.'
-      );
+      if (geracaoAtual === geracaoCarregamento.current) {
+        setErro(
+          'Não foi possível carregar os produtos do servidor. Os dados locais serão mantidos.'
+        );
+      }
     } finally {
-      setCarregando(false);
+      if (geracaoAtual === geracaoCarregamento.current) {
+        if (mostrarLoading) setCarregando(false);
+      }
     }
   }
 
-  function salvarLocalmente(lista: Produto[]) {
+  async function salvarLocalmente(lista: Produto[], geracaoAtual = geracaoCarregamento.current) {
+
     try {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        localStorage.setItem(CHAVE_STORAGE, JSON.stringify(lista));
+      if (!chaveStorageUsuario) {
+        throw new Error('Usuário não autenticado.');
+      }
+
+      if (geracaoAtual !== geracaoCarregamento.current) {
+        return;
+      }
+
+      await AsyncStorage.setItem(
+        chaveStorageUsuario,
+        JSON.stringify(lista)
+      );
+
+      if (geracaoAtual !== geracaoCarregamento.current) {
+        return;
       }
 
       setProdutos(lista);
     } catch (error) {
-      setErro('Não foi possível salvar os dados localmente.');
+      if (geracaoAtual === geracaoCarregamento.current) {
+        setErro('Não foi possível salvar os dados localmente.');
+      }
+
+      throw error;
     }
   }
 
   async function consultarCep() {
+    if (carregando || sincronizando) return;
+    const geracao = geracaoCarregamento.current;
     const cepLimpo = cep.replace(/\D/g, '');
 
     if (cepLimpo.length !== 8) {
@@ -118,20 +279,30 @@ export default function CadastroProdutoScreen() {
       setEndereco(null);
 
       const dados = await buscarCep(cepLimpo);
+      if (geracao !== geracaoCarregamento.current) return;
       setEndereco(dados);
       setSucesso('Endereço encontrado com sucesso!');
     } catch (error) {
-      setErro('Não foi possível localizar esse CEP.');
+      if (geracao !== geracaoCarregamento.current) return;
+      setErro(error instanceof Error ? error.message : 'Não foi possível localizar esse CEP.');
       setSucesso('');
       setEndereco(null);
     } finally {
-      setCarregando(false);
+      if (geracao === geracaoCarregamento.current) setCarregando(false);
     }
   }
 
   async function adicionarProduto() {
+    if (carregando || sincronizando) return;
+    const geracao = geracaoCarregamento.current;
     const produtoTratado = produto.trim();
     const precoTratado = preco.trim();
+
+    if (!user?.id) {
+      setErro('Faça login para cadastrar produtos.');
+      setSucesso('');
+      return;
+    }
 
     if (produtoTratado === '' || precoTratado === '') {
       setErro('Atenção! Preencha o nome do produto e o preço.');
@@ -155,12 +326,37 @@ export default function CadastroProdutoScreen() {
       setErro('');
       setSucesso('');
 
+      const semInternet = await verificarSemInternet();
+      if (geracao !== geracaoCarregamento.current) return;
+      const operacaoId = gerarOperacaoId();
+
+      if (semInternet) {
+        await adicionarProdutoPendente({
+          operacaoId,
+          usuarioId: user.id,
+          nome: produtoTratado,
+          preco: precoTratado,
+          endereco: enderecoCompleto,
+          criadoEm: new Date().toISOString(),
+        });
+
+        await carregarProdutosPendentes(geracao);
+      if (geracao !== geracaoCarregamento.current) return;
+
+        limparFormulario();
+        setSucesso('Produto salvo no dispositivo. Será sincronizado quando houver internet.');
+        return;
+      }
+
       const produtoCriado = await cadastrarProduto(
         produtoTratado,
         precoTratado,
-        enderecoCompleto
+        enderecoCompleto,
+        operacaoId,
+        user.id
       );
 
+      if (geracao !== geracaoCarregamento.current) return;
       const novoProduto: Produto = {
         id: produtoCriado._id,
         nome: produtoCriado.nome,
@@ -168,7 +364,8 @@ export default function CadastroProdutoScreen() {
         endereco: produtoCriado.endereco,
       };
 
-      salvarLocalmente([...produtos, novoProduto]);
+      await salvarLocalmente([...produtos, novoProduto], geracao);
+      if (geracao !== geracaoCarregamento.current) return;
       limparFormulario();
       setSucesso('Produto cadastrado com sucesso!');
 
@@ -177,25 +374,30 @@ export default function CadastroProdutoScreen() {
           console.warn('Não foi possível reproduzir o áudio:', error);
         });
       }
-      
+
     } catch (error) {
+      if (geracao !== geracaoCarregamento.current) return;
       setErro('Não foi possível cadastrar o produto no servidor.');
       setSucesso('');
     } finally {
-      setCarregando(false);
+      if (geracao === geracaoCarregamento.current) setCarregando(false);
     }
   }
 
   async function removerProduto(id: string) {
+    if (carregando || sincronizando) return;
+    const geracao = geracaoCarregamento.current;
     try {
       setCarregando(true);
       setErro('');
       setSucesso('');
 
       await excluirProduto(id);
+      if (geracao !== geracaoCarregamento.current) return;
 
       const novaLista = produtos.filter((item) => item.id !== id);
-      salvarLocalmente(novaLista);
+      await salvarLocalmente(novaLista, geracao);
+      if (geracao !== geracaoCarregamento.current) return;
 
       if (produtoEditando === id) {
         cancelarEdicao();
@@ -203,14 +405,17 @@ export default function CadastroProdutoScreen() {
 
       setSucesso('Produto removido com sucesso!');
     } catch (error) {
+      if (geracao !== geracaoCarregamento.current) return;
       setErro('Não foi possível remover o produto.');
       setSucesso('');
     } finally {
-      setCarregando(false);
+      if (geracao === geracaoCarregamento.current) setCarregando(false);
     }
   }
 
   function editarProduto(item: Produto) {
+    if (carregando || sincronizando) return;
+    listaRef.current?.scrollToOffset({ offset: 0, animated: true });
     setProduto(item.nome);
     setPreco(item.preco);
     setProdutoEditando(item.id);
@@ -223,6 +428,8 @@ export default function CadastroProdutoScreen() {
   }
 
   async function salvarEdicao() {
+    if (carregando || sincronizando) return;
+    const geracao = geracaoCarregamento.current;
     const produtoTratado = produto.trim();
     const precoTratado = preco.trim();
 
@@ -257,6 +464,7 @@ export default function CadastroProdutoScreen() {
         produtoAtual.endereco
       );
 
+      if (geracao !== geracaoCarregamento.current) return;
       const novaLista = produtos.map((item) => {
         if (item.id === produtoEditando) {
           return {
@@ -270,15 +478,17 @@ export default function CadastroProdutoScreen() {
         return item;
       });
 
-      salvarLocalmente(novaLista);
+      await salvarLocalmente(novaLista, geracao);
+      if (geracao !== geracaoCarregamento.current) return;
       limparFormulario();
       setProdutoEditando(null);
       setSucesso('Produto atualizado com sucesso!');
     } catch (error) {
+      if (geracao !== geracaoCarregamento.current) return;
       setErro('Não foi possível atualizar o produto.');
       setSucesso('');
     } finally {
-      setCarregando(false);
+      if (geracao === geracaoCarregamento.current) setCarregando(false);
     }
   }
 
@@ -327,13 +537,26 @@ export default function CadastroProdutoScreen() {
   }
 
   return (
-    <View
+    <KeyboardLayout
+      {...(Platform.OS !== 'web' ? { behavior: 'padding' as const } : {})}
       style={[
         styles.container,
         { backgroundColor: cores.fundo },
       ]}
     >
-    
+
+      <FlatList
+        ref={listaRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        showsVerticalScrollIndicator={true}
+        persistentScrollbar={true}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        data={produtos}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={
+          <>
       <Text
         style={styles.logo}
         accessibilityLabel="Ícone de carrinho de compras"
@@ -475,10 +698,10 @@ export default function CadastroProdutoScreen() {
           <TouchableOpacity
             style={styles.botaoCep}
             onPress={consultarCep}
-            disabled={carregando}
+            disabled={carregando || sincronizando}
             accessibilityRole="button"
             accessibilityLabel="Buscar endereço pelo CEP"
-            accessibilityState={{ disabled: carregando }}
+            accessibilityState={{ disabled: carregando || sincronizando }}
           >
             <Text
               style={[
@@ -620,10 +843,10 @@ export default function CadastroProdutoScreen() {
           <TouchableOpacity
             style={styles.botao}
             onPress={salvarEdicao}
-            disabled={carregando}
+            disabled={carregando || sincronizando}
             accessibilityRole="button"
             accessibilityLabel="Salvar alterações do produto"
-            accessibilityState={{ disabled: carregando }}
+            accessibilityState={{ disabled: carregando || sincronizando }}
           >
             <Text
               style={[
@@ -638,10 +861,10 @@ export default function CadastroProdutoScreen() {
           <TouchableOpacity
             style={styles.botaoCancelar}
             onPress={cancelarEdicao}
-            disabled={carregando}
+            disabled={carregando || sincronizando}
             accessibilityRole="button"
             accessibilityLabel="Cancelar edição do produto"
-            accessibilityState={{ disabled: carregando }}
+            accessibilityState={{ disabled: carregando || sincronizando }}
           >
             <Text
               style={[
@@ -657,10 +880,10 @@ export default function CadastroProdutoScreen() {
         <TouchableOpacity
           style={styles.botao}
           onPress={adicionarProduto}
-          disabled={carregando}
+          disabled={carregando || sincronizando}
           accessibilityRole="button"
           accessibilityLabel="Adicionar produto"
-          accessibilityState={{ disabled: carregando }}
+          accessibilityState={{ disabled: carregando || sincronizando }}
         >
           <Text
             style={[
@@ -685,9 +908,94 @@ export default function CadastroProdutoScreen() {
         Total cadastrado: {produtos.length}
       </Text>
 
-      <FlatList
-        data={produtos}
-        keyExtractor={(item) => item.id}
+      {sincronizando && (
+        <Text style={[styles.contador, { color: cores.titulo, fontSize: fonteAjustada }]} accessibilityLiveRegion="polite">
+          Sincronizando produtos...
+        </Text>
+      )}
+
+      {quantidadePendentes > 0 && (
+        <Text
+          style={[
+            styles.contador,
+            {
+              color: cores.textoEdicao,
+              fontSize: fonteAjustada,
+            },
+          ]}
+          accessibilityLiveRegion="polite"
+        >
+          ⏳ Aguardando sincronização: {quantidadePendentes}
+        </Text>
+      )}
+
+          {quantidadePendentes > 0 ? (
+            <View>
+              {produtosPendentes.map((item) => (
+                <View
+                  key={item.operacaoId}
+                  style={[
+                    styles.caixaEndereco,
+                    {
+                      backgroundColor: cores.fundoEndereco,
+                      borderColor: cores.textoEdicao,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.enderecoTitulo,
+                      {
+                        color: cores.titulo,
+                        fontSize: fonteAjustada,
+                      },
+                    ]}
+                  >
+                    {item.nome}
+                  </Text>
+
+                  <Text
+                    style={[
+                      styles.enderecoTexto,
+                      {
+                        color: cores.texto,
+                        fontSize: fonteAjustada,
+                      },
+                    ]}
+                  >
+                    Preço: R$ {item.preco}
+                </Text>
+
+                  <Text
+                    style={[
+                      styles.enderecoTexto,
+                      {
+                        color: cores.texto,
+                        fontSize: fonteAjustada,
+                      },
+                    ]}
+                  >
+                    {item.endereco}
+                  </Text>
+
+                  <Text
+                    style={[
+                      styles.textoEdicao,
+                      {
+                        color: cores.textoEdicao,
+                        fontSize: fonteAjustada,
+                        marginTop: 6,
+                      },
+                    ]}
+                  >
+                    ⏳ Aguardando sincronização
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+          </>
+        }
         renderItem={({ item }) => (
           <ProdutoItem
             item={item}
@@ -711,7 +1019,7 @@ export default function CadastroProdutoScreen() {
           </Text>
         }
       />
-    </View>
+    </KeyboardLayout>
   );
 }
 

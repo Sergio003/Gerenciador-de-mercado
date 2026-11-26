@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 import type { User } from '@supabase/supabase-js';
 import * as LocalAuthentication from 'expo-local-authentication';
 import React, {
@@ -287,7 +288,7 @@ export function SessionProvider({
         }
 
         if (
-          state !== 'active' &&
+          state === 'background' &&
           active.current
         ) {
           void logout(
@@ -297,74 +298,89 @@ export function SessionProvider({
       }
     );
 
-    const timer = setInterval(async () => {
-      if (
-        !active.current ||
-        renewing.current
-      ) {
+    let falhasConfirmadas = 0;
+    let geracaoValidada = -1;
+    let versaoRede = 0;
+
+    const validarSessao = async () => {
+      if (!active.current) return;
+
+      if (Date.now() - activity.current >= 120000) {
+        void logout('Sessão expirada por inatividade');
         return;
       }
 
-      if (
-        Date.now() - activity.current >= 120000
-      ) {
-        void logout(
-          'Sessão expirada por inatividade'
-        );
-        return;
-      }
-
+      if (renewing.current) return;
       renewing.current = true;
+      const tentativa = generation.current;
+      if (geracaoValidada !== tentativa) {
+        geracaoValidada = tentativa;
+        falhasConfirmadas = 0;
+      }
+      const redeInicial = versaoRede;
+      const atual = () => active.current && generation.current === tentativa;
 
       try {
-        const activityToSend =
-          activity.current > lastSentActivity.current
-            ? new Date().toISOString()
-            : new Date(lastSentActivity.current).toISOString();
-
-        const { data, error } =
-          await supabase.rpc('touch_session', {
-            p_id: lease.current,
-            p_activity: activityToSend,
-          });
-
-        if (!error && data === true) {
-          lastSentActivity.current =
-            new Date(activityToSend).getTime();
+        const rede = await NetInfo.fetch();
+        if (!atual()) return;
+        if (rede.isConnected !== true || rede.isInternetReachable === false) {
+          falhasConfirmadas = 0;
+          return;
         }
 
-        if (error || data !== true) {
-          console.log(
-            'Falha na validação da sessão:',
-            {
-              errorCode: error?.code ?? null,
-              errorMessage: error?.message ?? null,
-              resultado: data,
-            }
-          );
+        const atividade = activity.current;
+        const { data, error } = await supabase.rpc('touch_session', {
+          p_id: lease.current,
+          p_activity: new Date(atividade).toISOString(),
+        });
 
-          await logout(
-            'Sessão inválida no servidor'
-          );
+        if (!atual()) return;
+        const redeDepois = await NetInfo.fetch();
+        if (!atual()) return;
+        if (redeInicial !== versaoRede || redeDepois.isConnected !== true || redeDepois.isInternetReachable === false) {
+          falhasConfirmadas = 0;
+          return;
         }
+
+        const codigo = error?.code ?? '';
+        const invalida = (!error && data === false) ||
+          ['PGRST301', 'PGRST303', '42501'].includes(codigo);
+
+        if (invalida) {
+          falhasConfirmadas++;
+          console.warn('Validação negativa:', codigo || 'false', falhasConfirmadas);
+          if (falhasConfirmadas >= 2) {
+            await logout('Sessão inválida no servidor');
+          }
+          return;
+        }
+
+        falhasConfirmadas = 0;
+        if (error) {
+          console.warn('Validação temporariamente indisponível:', codigo);
+          return;
+        }
+        if (data === true) lastSentActivity.current = atividade;
       } catch (error) {
-        console.log(
-          'Exceção ao validar sessão:',
-          error instanceof Error
-            ? error.message
-            : 'Erro desconhecido'
-        );
-
-        await logout(
-          'Não foi possível validar a sessão'
-        );
+        falhasConfirmadas = 0;
+        if (atual()) console.warn('Não foi possível validar a sessão neste momento:', error);
       } finally {
         renewing.current = false;
       }
-    }, 10000);
+    };
+
+    const timer = setInterval(() => { void validarSessao(); }, 10000);
+    const unsubscribe = NetInfo.addEventListener((rede) => {
+      versaoRede++;
+      falhasConfirmadas = 0;
+      if (rede.isConnected === true && rede.isInternetReachable !== false) {
+        void validarSessao();
+      }
+    });
 
     return () => {
       appListener.remove();
+      unsubscribe();
       clearInterval(timer);
     };
   }, [logout]);

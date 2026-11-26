@@ -1,18 +1,21 @@
-
 import { useSession } from '@/src/contexts/SessionProvider';
 import { supabase } from '@/src/services/supabase';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
+
+const AreaTeclado = Platform.OS === 'web' ? View : KeyboardStickyView;
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -43,6 +46,7 @@ export default function ConversaScreen() {
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const { user, touch } = useSession();
 
+  const listaRef = useRef<FlatList<Mensagem>>(null);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -360,6 +364,7 @@ export default function ConversaScreen() {
       style={styles.container}
       edges={['bottom']}
     >
+      <View style={styles.layoutChat}>
       <Text style={styles.titulo}>
         Chat — Menor Preço Saqua
       </Text>
@@ -387,6 +392,9 @@ export default function ConversaScreen() {
         </Text>
       ) : (
         <FlatList
+          ref={listaRef}
+          style={styles.listaFlex}
+          onContentSizeChange={() => listaRef.current?.scrollToEnd({ animated: true })}
           data={mensagens}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
@@ -434,10 +442,11 @@ export default function ConversaScreen() {
       )}
 
       {!carregando && !erro && (
-        <>
+        <AreaTeclado style={styles.areaTeclado}>
           <View style={styles.areaEnvio}>
             <TextInput
               style={styles.campoMensagem}
+              accessibilityLabel="Digite sua mensagem"
               placeholder="Digite sua mensagem..."
               placeholderTextColor="#888888"
               value={texto}
@@ -451,6 +460,9 @@ export default function ConversaScreen() {
                 styles.botaoEnviar,
                 enviando && { opacity: 0.5 },
               ]}
+              accessibilityRole="button"
+              accessibilityLabel="Enviar mensagem"
+              accessibilityState={{ disabled: enviando || !texto.trim() }}
               onPress={enviarMensagem}
               disabled={enviando || !texto.trim()}
             >
@@ -467,8 +479,9 @@ export default function ConversaScreen() {
               {erroEnvio}
             </Text>
           )}
-        </>
+        </AreaTeclado>
       )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -512,6 +525,16 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 
+  layoutChat: {
+    flex: 1,
+    minHeight: 0,
+  },
+
+  listaFlex: {
+    flex: 1,
+    minHeight: 0,
+  },
+
   listaMensagens: {
     paddingBottom: 8,
   },
@@ -552,7 +575,14 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 
+  areaTeclado: {
+    flexShrink: 0,
+    backgroundColor: '#FFFFFF',
+    zIndex: 10,
+  },
+
   areaEnvio: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 12,

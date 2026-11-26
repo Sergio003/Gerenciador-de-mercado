@@ -1,4 +1,3 @@
-
 import {
   AccessibilityProvider,
   useAccessibility,
@@ -19,13 +18,14 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
+
 import 'react-native-reanimated';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-// Controla o acesso às telas conforme o login.
 function AppNavigator() {
   const { user } = useSession();
 
@@ -43,6 +43,7 @@ function AppNavigator() {
           name="(tabs)"
           options={{ headerShown: false }}
         />
+
         <Stack.Screen
           name="chat/[roomId]"
           options={{
@@ -64,7 +65,6 @@ function AppNavigator() {
   );
 }
 
-// Utiliza o tema selecionado nas configurações de acessibilidade.
 function AppComTema() {
   const { tema } = useAccessibility();
 
@@ -87,7 +87,6 @@ export default function RootLayout() {
       return;
     }
 
-    // Impede que o VLibras seja carregado mais de uma vez.
     if (document.getElementById('vlibras-script')) {
       return;
     }
@@ -113,7 +112,6 @@ export default function RootLayout() {
 
     document.body.appendChild(container);
 
-    // Carrega o VLibras na versão web.
     const script = document.createElement('script');
     script.id = 'vlibras-script';
     script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
@@ -138,11 +136,21 @@ export default function RootLayout() {
     document.body.appendChild(script);
   }, []);
 
-  return (
+  const aplicativo = (
     <SessionProvider>
       <AccessibilityProvider>
         <AppComTema />
       </AccessibilityProvider>
     </SessionProvider>
+  );
+
+  if (Platform.OS === 'web') {
+    return aplicativo;
+  }
+
+  return (
+    <KeyboardProvider>
+      {aplicativo}
+    </KeyboardProvider>
   );
 }
